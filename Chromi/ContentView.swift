@@ -44,7 +44,12 @@ struct ContentView: View {
             .ignoresSafeArea()
         }
         .ignoresSafeArea()
-        .fullScreenCover(isPresented: $showGameFlow) {
+        .onAppear {
+            BackgroundMusicPlayer.shared.playLoop(named: "HomePageSound")
+        }
+        .fullScreenCover(isPresented: $showGameFlow, onDismiss: {
+            BackgroundMusicPlayer.shared.playLoop(named: "HomePageSound")
+        }) {
             GameFlowView {
                 showGameFlow = false
             }
@@ -181,6 +186,7 @@ struct ContentView: View {
     }
 
     private func startGame() {
+        SoundEffectPlayer.shared.play(named: "ClickStartSound", fileExtension: "wav")
         showGameFlow = true
     }
 }
@@ -212,6 +218,21 @@ private struct GameFlowView: View {
         }
         .background(Color.black.ignoresSafeArea())
         .animation(.easeInOut(duration: 0.42), value: stage)
+        .onAppear {
+            playMusic(for: stage)
+        }
+        .onChange(of: stage) { _, newStage in
+            playMusic(for: newStage)
+        }
+    }
+
+    private func playMusic(for stage: Stage) {
+        switch stage {
+        case .intro:
+            BackgroundMusicPlayer.shared.playLoop(named: "HomePageSound")
+        case .level:
+            BackgroundMusicPlayer.shared.playLoop(named: "LevelPageSound")
+        }
     }
 }
 

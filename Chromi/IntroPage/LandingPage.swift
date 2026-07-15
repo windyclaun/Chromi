@@ -124,6 +124,7 @@ struct LandingPage: View {
     // MARK: - Components
     private var skipButton: some View {
         Button("Skip") {
+            SoundEffectPlayer.shared.play(named: "ClickNextIntro", fileExtension: "mp3")
             pageTransitionDirection = 1
             withAnimation(.spring(response: 0.52, dampingFraction: 0.9)) {
                 currentPage = pages.count - 1

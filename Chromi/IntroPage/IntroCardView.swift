@@ -156,7 +156,10 @@ struct IntroCardView: View {
     }
 
     private func nextButton(width: CGFloat) -> some View {
-        Button(action: goToNextPage) {
+        Button(action: {
+            SoundEffectPlayer.shared.play(named: "ClickNextIntro", fileExtension: "mp3")
+            goToNextPage()
+        }) {
             ZStack {
                 Capsule().fill(LinearGradient(colors: [Color(red: 1.0, green: 0.78, blue: 0.24), Color(red: 0.74, green: 0.32, blue: 1.0), Color(red: 0.42, green: 0.16, blue: 0.86)], startPoint: .topLeading, endPoint: .bottomTrailing))
                 Capsule().fill(Color.white.opacity(0.26)).frame(height: 18).padding(.horizontal, 18).padding(.top, 7).frame(maxHeight: .infinity, alignment: .top)
@@ -175,7 +178,10 @@ struct IntroCardView: View {
     }
 
     private func letsPlayButton(width: CGFloat) -> some View {
-        Button(action: onLetsPlay) {
+        Button(action: {
+            SoundEffectPlayer.shared.play(named: "ClickStartSound", fileExtension: "wav")
+            onLetsPlay()
+        }) {
             HStack(spacing: 9) {
                 Text("Let's Play!")
                 Image(systemName: "gamecontroller.fill")
