@@ -9,6 +9,8 @@ import SwiftUI
 import UIKit
 
 struct ContentView: View {
+    @State private var showLandingPage = false
+
     var body: some View {
         GeometryReader { geometry in
             let isLandscape = geometry.size.width > geometry.size.height
@@ -42,6 +44,11 @@ struct ContentView: View {
             .ignoresSafeArea()
         }
         .ignoresSafeArea()
+        .fullScreenCover(isPresented: $showLandingPage) {
+            LandingPage {
+                showLandingPage = false
+            }
+        }
     }
 
     private func landscapeContent(in size: CGSize) -> some View {
@@ -174,7 +181,7 @@ struct ContentView: View {
     }
 
     private func startGame() {
-        
+        showLandingPage = true
     }
 }
 
