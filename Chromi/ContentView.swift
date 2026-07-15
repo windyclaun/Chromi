@@ -9,7 +9,7 @@ import SwiftUI
 import UIKit
 
 struct ContentView: View {
-    @State private var showLandingPage = false
+    @State private var showGameFlow = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -44,9 +44,9 @@ struct ContentView: View {
             .ignoresSafeArea()
         }
         .ignoresSafeArea()
-        .fullScreenCover(isPresented: $showLandingPage) {
-            LandingPage {
-                showLandingPage = false
+        .fullScreenCover(isPresented: $showGameFlow) {
+            GameFlowView {
+                showGameFlow = false
             }
         }
     }
@@ -181,7 +181,37 @@ struct ContentView: View {
     }
 
     private func startGame() {
-        showLandingPage = true
+        showGameFlow = true
+    }
+}
+
+private struct GameFlowView: View {
+    enum Stage: Equatable {
+        case intro
+        case level
+    }
+
+    @State private var stage: Stage = .intro
+    let onDismiss: () -> Void
+
+    var body: some View {
+        ZStack {
+            LevelPage {
+                onDismiss()
+            }
+            .opacity(stage == .level ? 1 : 0)
+            .allowsHitTesting(stage == .level)
+
+            LandingPage {
+                withAnimation(.easeInOut(duration: 0.42)) {
+                    stage = .level
+                }
+            }
+            .opacity(stage == .intro ? 1 : 0)
+            .allowsHitTesting(stage == .intro)
+        }
+        .background(Color.black.ignoresSafeArea())
+        .animation(.easeInOut(duration: 0.42), value: stage)
     }
 }
 
