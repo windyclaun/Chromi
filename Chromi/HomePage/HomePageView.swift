@@ -60,7 +60,7 @@ struct HomePageView: View {
             ZStack {
                 glowBlob(color: .purple, width: min(size.width * 0.34, 390), height: min(size.width * 0.28, 320))
                 SparkleHalo(width: min(size.width * 0.34, 390), height: min(size.width * 0.32, 360))
-                bundledImage("maskot2d")
+                bundledImage("maskotNew")
                     .resizable()
                     .scaledToFit()
                     .frame(width: min(size.width * 0.5, 450))
@@ -106,7 +106,7 @@ struct HomePageView: View {
             ZStack {
                 glowBlob(color: .purple, width: min(size.width * 0.72, 350), height: min(size.width * 0.7, 340))
                 SparkleHalo(width: min(size.width * 0.72, 350), height: min(size.width * 0.7, 340))
-                bundledImage("maskot2d")
+                bundledImage("maskotNew")
                     .resizable()
                     .scaledToFit()
                     .frame(width: min(size.width * 0.68, 350))

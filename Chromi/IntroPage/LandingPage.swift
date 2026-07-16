@@ -152,7 +152,7 @@ struct LandingPage: View {
                 .frame(width: width * 1.18, height: width * 1.18)
                 .clipShape(Ellipse())
 
-            bundledImage("maskot2d")
+            bundledImage("maskotNew")
                 .resizable()
                 .scaledToFit()
                 .frame(width: width)

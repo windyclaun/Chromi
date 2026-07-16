@@ -11,11 +11,25 @@ import UIKit
 struct LevelPage: View {
     var onBack: () -> Void = {}
     var onSelectLevel: (LevelNode) -> Void = { _ in }
+    let unlockedLevelID: Int
 
     @State private var mapOffset: CGFloat = 0
     @GestureState private var dragTranslation: CGFloat = 0
 
-    private let levels: [LevelNode] = LevelNode.previewLevels
+    init(
+        onBack: @escaping () -> Void = {},
+        onSelectLevel: @escaping (LevelNode) -> Void = { _ in },
+        unlockedLevelID: Int = 1
+    ) {
+        self.onBack = onBack
+        self.onSelectLevel = onSelectLevel
+        self.unlockedLevelID = unlockedLevelID
+    }
+
+    private var levels: [LevelNode] {
+        LevelNode.previewLevels(unlockedLevelID: unlockedLevelID)
+    }
+
     private var backgroundAspectRatio: CGFloat {
         if let image = UIImage(named: "bg_long_level") ?? UIImage(named: "bg_long_level.jpg") {
             return image.size.width / image.size.height

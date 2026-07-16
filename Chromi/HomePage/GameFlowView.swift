@@ -14,6 +14,7 @@ struct GameFlowView: View {
         case coloring
     }
 
+    @AppStorage("chromi.highestUnlockedLevelID") private var highestUnlockedLevelID: Int = 1
     @State private var stage: Stage = .intro
     @State private var selectedLevel: LevelNode?
     let onDismiss: () -> Void
@@ -26,7 +27,16 @@ struct GameFlowView: View {
                     withAnimation(.easeInOut(duration: 0.42)) {
                         stage = .level
                     }
-                }
+                },
+                onMenu: {
+                    onDismiss()
+                },
+                onNextLevel: {
+                    advanceToNextLevel()
+                },
+                onLevelCompleted: {
+                    markCurrentLevelCompleted()
+                },
             )
             .opacity(stage == .coloring ? 1 : 0)
             .allowsHitTesting(stage == .coloring)
@@ -38,7 +48,8 @@ struct GameFlowView: View {
                     withAnimation(.easeInOut(duration: 0.42)) {
                         stage = .coloring
                     }
-                }
+                },
+                unlockedLevelID: highestUnlockedLevelID
             )
             .opacity(stage == .level ? 1 : 0)
             .allowsHitTesting(stage == .level)
@@ -89,5 +100,27 @@ struct GameFlowView: View {
         default:
             return "Orange"
         }
+    }
+
+    private func advanceToNextLevel() {
+        guard let currentLevel = selectedLevel else { return }
+        let nextLevel = LevelNode.previewLevels(unlockedLevelID: highestUnlockedLevelID).first { $0.id == currentLevel.id + 1 }
+
+        if let nextLevel {
+            selectedLevel = nextLevel
+            withAnimation(.easeInOut(duration: 0.42)) {
+                stage = .coloring
+            }
+        } else {
+            withAnimation(.easeInOut(duration: 0.42)) {
+                stage = .level
+            }
+        }
+    }
+
+    private func markCurrentLevelCompleted() {
+        guard let currentLevel = selectedLevel else { return }
+        let nextUnlockedLevel = min(currentLevel.id + 1, LevelNode.maxLevelID)
+        highestUnlockedLevelID = max(highestUnlockedLevelID, nextUnlockedLevel)
     }
 }
