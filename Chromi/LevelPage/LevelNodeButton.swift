@@ -86,19 +86,23 @@ struct LevelNodeButton: View {
                 .font(.system(size: 38, weight: .black, design: .rounded))
                 .foregroundStyle(
                     LinearGradient(
-                        colors: [Color.white, Color(red: 1.0, green: 0.86, blue: 0.38), Color(red: 0.67, green: 0.27, blue: 1.0)],
-                        startPoint: .top,
+                        colors: [
+                            Color(red: 0.98, green: 0.9, blue: 1.0),
+                            Color(red: 0.78, green: 0.28, blue: 1.0),
+                            Color(red: 0.34, green: 0.06, blue: 0.62)
+                        ],
+                        startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
                 .overlay(
                     Text("\(level.id)")
                         .font(.system(size: 38, weight: .black, design: .rounded))
-                        .foregroundStyle(Color.black.opacity(0.16))
-                        .offset(x: 1.5, y: 2)
+                        .foregroundStyle(Color(red: 0.18, green: 0.02, blue: 0.36).opacity(0.24))
+                        .offset(x: 1.6, y: 2.2)
                 )
-                .shadow(color: Color.white.opacity(0.6), radius: 2, x: 0, y: 1)
-                .shadow(color: Color.purple.opacity(0.28), radius: 5, x: 0, y: 3)
+                .shadow(color: Color.white.opacity(0.72), radius: 2, x: 0, y: 1)
+                .shadow(color: Color(red: 0.52, green: 0.0, blue: 0.9).opacity(0.48), radius: 6, x: 0, y: 3)
                 .rotationEffect(.degrees(level.id.isMultiple(of: 2) ? -6 : 4))
                 .offset(y: 4)
 
