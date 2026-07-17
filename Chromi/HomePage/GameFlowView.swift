@@ -84,21 +84,21 @@ struct GameFlowView: View {
     private func modelName(for level: LevelNode?) -> String {
         switch level?.id {
         case 1:
-            return "Orange"
-        case 2:
-            return "Pear"
-        case 3:
             return "Apple"
-        case 4:
-            return "Avocado"
-        case 5:
-            return "Eggplkant"
-        case 6:
-            return "Orange1"
-        case 7:
-            return "Lemon1"
-        default:
+        case 2:
+            return "Watermelon"
+        case 3:
             return "Orange"
+        case 4:
+            return "Eggplant"
+        case 5:
+            return "Lemon1"
+        case 6:
+            return "Coconut"
+        case 7:
+            return "Avocado"
+        default:
+            return "Apple"
         }
     }
 

@@ -19,6 +19,7 @@ struct SuccessPageView: View {
     @State private var fruitPitch: Float = 0
     @State private var lastFruitDrag: CGSize = .zero
     @State private var isFloating = false
+    @State private var isNextButtonAnimating = false
     @State private var showEndingPage = false
 
     var body: some View {
@@ -83,19 +84,19 @@ struct SuccessPageView: View {
                     .offset(y: isFloating ? -8 : 6)
                     .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: isFloating)
 
-                    Spacer(minLength: isLandscape ? 48 : 74)
+                    nextButton
+                        .padding(.top, 14)
+                        .padding(.bottom, isLandscape ? 20 : 28)
+
+                    Spacer(minLength: isLandscape ? 24 : 36)
                 }
             }
             .ignoresSafeArea()
-            .overlay(alignment: .bottomTrailing) {
-                nextButton
-                    .padding(.trailing, isLandscape ? 42 : 24)
-                    .padding(.bottom, max(geometry.safeAreaInsets.bottom + 24, isLandscape ? 34 : 30))
-            }
         }
         .ignoresSafeArea()
         .onAppear {
             isFloating = true
+            isNextButtonAnimating = true
         }
         .fullScreenCover(isPresented: $showEndingPage) {
             EndingPageView(
@@ -150,27 +151,65 @@ struct SuccessPageView: View {
             onLevelCompleted()
             showEndingPage = true
         } label: {
-            HStack(spacing: 10) {
-                Text("Next")
-                Image(systemName: "arrow.right")
+            ZStack {
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.18, green: 0.72, blue: 0.34),
+                                Color(red: 0.48, green: 0.94, blue: 0.5),
+                                Color(red: 0.96, green: 0.98, blue: 0.72)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.white.opacity(0.42), lineWidth: 2)
+                    )
+                    .overlay(alignment: .leading) {
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.0),
+                                        Color.white.opacity(isNextButtonAnimating ? 0.36 : 0.08),
+                                        Color.white.opacity(0.0)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: 52)
+                            .offset(x: isNextButtonAnimating ? 88 : -18)
+                            .blur(radius: 2)
+                    }
+                    .shadow(color: Color.green.opacity(0.42), radius: 16, x: 0, y: 7)
+                    .shadow(color: Color.black.opacity(0.18), radius: 8, x: 0, y: 5)
+
+                HStack(spacing: 10) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 15, weight: .black))
+                        .offset(y: isNextButtonAnimating ? -2 : 1)
+
+                    Text("Next")
+
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 16, weight: .black))
+                        .offset(x: isNextButtonAnimating ? 3 : 0)
+                }
+                .font(.system(size: 18, weight: .black, design: .rounded))
+                .foregroundStyle(Color.white)
+                .padding(.horizontal, 26)
+                .padding(.vertical, 14)
+                .scaleEffect(isNextButtonAnimating ? 1.03 : 0.98)
+                .offset(y: isNextButtonAnimating ? -2 : 2)
             }
-            .font(.system(size: 18, weight: .black, design: .rounded))
-            .foregroundStyle(Color.white)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 14)
-            .background(
-                LinearGradient(
-                    colors: [Color(red: 0.48, green: 0.94, blue: 0.5), Color(red: 0.18, green: 0.72, blue: 0.34)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
-                in: Capsule()
-            )
-            .overlay(Capsule().stroke(Color.white.opacity(0.38), lineWidth: 2))
-            .shadow(color: Color.green.opacity(0.4), radius: 14, x: 0, y: 6)
-            .shadow(color: Color.black.opacity(0.22), radius: 8, x: 0, y: 5)
+            .frame(minWidth: 146)
         }
         .buttonStyle(LevelButtonStyle())
+        .animation(.easeInOut(duration: 1.25).repeatForever(autoreverses: true), value: isNextButtonAnimating)
     }
 
     private var fruitRotationGesture: some Gesture {
