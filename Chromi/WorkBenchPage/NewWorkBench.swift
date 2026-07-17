@@ -55,7 +55,18 @@ struct NewWorkBench: View {
                 balls: $potionsList,
                 targets: $targetList
             )
+            FruitModelView(
+                modelName: modelName,
+                fruitYaw: $fruitYaw,
+                fruitPitch: $fruitPitch,
+                lastFruitDrag: $lastFruitDrag,
+                isFruitFloating: $isFruitFloating
+            )
+            
             WorkBenchTopButton(onBack: onBack, onRestart: onRestart, isPauseGame: $isPauseGame)
+        }
+        .onAppear {
+            isFruitFloating = true
         }
         .fullScreenCover(isPresented: $showSuccessPage) {
             SuccessPageView(
@@ -197,6 +208,68 @@ struct WorkBenchButton: View {
     }
 }
 
+struct FruitModelView: View {
+    var modelName: String
+    
+    @Binding var fruitYaw: Float
+    @Binding var fruitPitch: Float
+    @Binding var lastFruitDrag: CGSize
+    @Binding var isFruitFloating: Bool
+    
+    var body: some View {
+        GeometryReader { geometry in
+            let isLandscape = geometry.size.width > geometry.size.height
+            let topAreaHeight = geometry.size.height * 0.34
+            let fruitHeightSize = geometry.size.height * (isLandscape ? 0.38 : 0.4)
+            let topPadding = fruitHeightSize * 0.08
+            
+            VStack(spacing: 0) {
+                RealityFruitView(modelName: modelName, yaw: fruitYaw, pitch: fruitPitch)
+                    .id(modelName)
+                    .frame(width: 500, height: fruitHeightSize)
+                    .shadow(color: Color.black.opacity(0.24), radius: 18, x: 0, y: 16)
+                    .contentShape(Rectangle())
+                    .gesture(fruitRotationGesture())
+                    .padding(.top, topPadding)
+                
+                HStack(spacing: 7) {
+                    Image(systemName: "rotate.3d")
+                    Text("Geser ke semua arah untuk memutar")
+                }
+                .font(.system(size: 13, weight: .black, design: .rounded))
+                .foregroundStyle(.white.opacity(0.94))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(Color.black.opacity(0.18), in: Capsule())
+                
+                Spacer()
+            }
+            .offset(y: isFruitFloating ? -6 : 0)
+            .animation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true), value: isFruitFloating)
+            .frame(maxWidth: .infinity, maxHeight: fruitHeightSize)
+            .padding(.top, 6)
+        }
+        .ignoresSafeArea()
+        .onAppear {
+            isFruitFloating = true
+        }
+
+    }
+    
+    private func fruitRotationGesture() -> some Gesture {
+        DragGesture(minimumDistance: 4)
+            .onChanged { value in
+                let deltaX = value.translation.width - lastFruitDrag.width
+                let deltaY = value.translation.height - lastFruitDrag.height
+                fruitYaw += Float(deltaX) * 0.01
+                fruitPitch += Float(deltaY) * 0.01
+                lastFruitDrag = value.translation
+            }
+            .onEnded { _ in
+                lastFruitDrag = .zero
+            }
+    }
+}
 
 struct Test_PreviewContainer: View {
     @State var potionsList: [BallDataType] = [
@@ -211,7 +284,7 @@ struct Test_PreviewContainer: View {
     ]
     
     var body: some View {
-        NewWorkBench(modelName: "Orange",
+        NewWorkBench(modelName: "Avocado",
                      potionsList: potionsList,
                      targetList: targetList,
                      onRestart: {},

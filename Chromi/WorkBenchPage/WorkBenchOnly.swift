@@ -215,6 +215,8 @@ struct InteractiveBallView: View {
     private func checkBallMerge(for activeBall: BallDataType, currentIndex: Int) {
         let mergeThreshold: CGFloat = 50.0
         
+        let primaryColors: Set<String> = ["red", "blue", "yellow"]
+        
         for index in allBalls.indices {
             if index == currentIndex { continue }
             
@@ -222,13 +224,61 @@ struct InteractiveBallView: View {
             let distance = sqrt(pow(activeBall.position.x - targetBall.position.x, 2) + pow(activeBall.position.y - targetBall.position.y, 2))
             
             if distance < mergeThreshold {
-                if (activeBall.colorName == "red" && targetBall.colorName == "blue") ||
-                   (activeBall.colorName == "blue" && targetBall.colorName == "red") {
+                let colorA = activeBall.colorName
+                let colorB = targetBall.colorName
+                
+                var finalColorTarget: String? = nil
+                
+                // ==========================================
+                // LOGIKA 1: PENGURANGAN WARNA (SECONDARY - PRIMARY)
+                // ==========================================
+                
+                // Kasus 1: Purple (Red + Blue) dikurangi salah satunya
+                if (colorA == "purple" && colorB == "min_blue") || (colorA == "min_blue" && colorB == "purple") {
+                    finalColorTarget = "red"
+                } else if (colorA == "purple" && colorB == "min_red") || (colorA == "min_red" && colorB == "purple") {
+                    finalColorTarget = "blue"
+                }
+                
+                // Kasus 2: Orange (Red + Yellow) dikurangi salah satunya
+                else if (colorA == "orange" && colorB == "min_red") || (colorA == "min_red" && colorB == "orange") {
+                    finalColorTarget = "yellow"
+                } else if (colorA == "orange" && colorB == "min_yellow") || (colorA == "min_yellow" && colorB == "orange") {
+                    finalColorTarget = "red"
+                }
+                
+                // Kasus 3: Green (Blue + Yellow) dikurangi salah satunya
+                else if (colorA == "green" && colorB == "min_blue") || (colorA == "min_blue" && colorB == "green") {
+                    finalColorTarget = "yellow"
+                } else if (colorA == "green" && colorB == "min_yellow") || (colorA == "min_yellow" && colorB == "green") {
+                    finalColorTarget = "blue"
+                }
+                
+                // ==========================================
+                // LOGIKA 2: PENAMBAHAN WARNA (PRIMARY + PRIMARY)
+                // ==========================================
+                else if (colorA == "red" && colorB == "blue") || (colorA == "blue" && colorB == "red") {
+                    finalColorTarget = "purple"
+                } else if (colorA == "red" && colorB == "yellow") || (colorA == "yellow" && colorB == "red") {
+                    finalColorTarget = "orange"
+                } else if (colorA == "blue" && colorB == "yellow") || (colorA == "yellow" && colorB == "blue") {
+                    finalColorTarget = "green"
+                }
+                
+                // ==========================================
+                // LOGIKA 3: KONDISI GAGAL (COKLAT)
+                // ==========================================
+                else if primaryColors.contains(colorA) || primaryColors.contains(colorB) {
+                    finalColorTarget = "brown"
+                }
+                
+                // Eksekusi perubahan ke dalam array jika kombinasi valid ditemukan
+                if let resultColor = finalColorTarget {
+                    // Bola target berubah menjadi warna sisa hasil pengurangan/penambahan
+                    allBalls[index].colorName = resultColor
                     
-                    // Eksekusi merge: Ubah target jadi ungu, hapus bola aktif
-                    allBalls[index].colorName = "purple"
-                    allBalls[currentIndex].position = targetBall.position // Selaraskan posisi visual sebelum dihapus
-                    allBalls.remove(at: currentIndex)
+                    // Hapus bola aktif yang sedang di-drag karena sudah melebur ke dalam proses operasi
+                    allBalls.removeAll(where: { $0.id == activeBall.id })
                     break
                 }
             }
@@ -240,7 +290,7 @@ struct InteractiveBallView: View {
 struct WorkBenchOnly_PreviewContainer: View {
     @State var potionsList: [BallDataType] = [
         BallDataType(colorName: "red"),
-        BallDataType(colorName: "purple"),
+        BallDataType(colorName: "yellow"),
         BallDataType(colorName: "red")
     ]
     
