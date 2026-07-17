@@ -19,13 +19,17 @@ struct NewWorkBench: View {
     @State var potionsList: [BallDataType]
     @State var targetList: [PotionTargetDataType]
     
+    private let initialBalls: [BallDataType]
+    private let initialTargets: [PotionTargetDataType]
+    
     @State private var isPauseGame: Bool = false
     @State private var fruitYaw: Float = 0
     @State private var fruitPitch: Float = 0
     @State private var lastFruitDrag: CGSize = .zero
     @State private var isFruitFloating = false
     @State private var showSuccessPage = false
-    
+    @State private var isReset = false
+
     init(
         modelName: String,
         potionsList: [BallDataType],
@@ -46,6 +50,9 @@ struct NewWorkBench: View {
         
         self._potionsList = State(initialValue: potionsList)
         self._targetList = State(initialValue: targetList)
+        
+        self.initialBalls = potionsList
+        self.initialTargets = targetList
     }
     
     var body: some View {
@@ -53,7 +60,8 @@ struct NewWorkBench: View {
             WorkBenchBackground()
             WorkBenchOnly(
                 balls: $potionsList,
-                targets: $targetList
+                targets: $targetList,
+                isLayoutInitialized: $isReset
             )
             FruitModelView(
                 modelName: modelName,
@@ -63,7 +71,7 @@ struct NewWorkBench: View {
                 isFruitFloating: $isFruitFloating
             )
             
-            WorkBenchTopButton(onBack: onBack, onRestart: onRestart, isPauseGame: $isPauseGame)
+            WorkBenchTopButton(onBack: onBack, onRestart: resetGameLevel, isPauseGame: $isPauseGame)
         }
         .onAppear {
             isFruitFloating = true
@@ -111,6 +119,15 @@ struct NewWorkBench: View {
             )
         }
     }
+    
+    private func resetGameLevel() {
+        self.potionsList = initialBalls.map { BallDataType(colorName: $0.colorName, position: .zero) }
+        
+        self.targetList = initialTargets.map { PotionTargetDataType(colorName: $0.colorName, isMatched: false, globalFrame: .zero) }
+        
+        self.isReset = false
+    }
+
 }
 
 struct WorkBenchBackground: View {
@@ -165,6 +182,7 @@ struct WorkBenchTopButton: View {
             Spacer()
         }
     }
+    
 }
 
 struct WorkBenchButton: View {

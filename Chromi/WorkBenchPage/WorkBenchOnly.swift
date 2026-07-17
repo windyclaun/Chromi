@@ -24,6 +24,8 @@ struct WorkBenchOnly: View {
     @Binding var balls: [BallDataType]
     @Binding var targets: [PotionTargetDataType]
     
+    @Binding var isLayoutInitialized: Bool
+    
     var body: some View {
         VStack (spacing: 0){
             Spacer()
@@ -32,7 +34,7 @@ struct WorkBenchOnly: View {
                 .scaledToFit()
                 .frame(maxWidth: .infinity)
                 .clipped()
-            WorkBench(balls: $balls, targets: $targets)
+            WorkBench(balls: $balls, targets: $targets, isLayoutInitialized: $isLayoutInitialized)
         }
         .ignoresSafeArea()
     }
@@ -42,7 +44,7 @@ struct WorkBench: View {
     @Binding var balls: [BallDataType]
     @Binding var targets: [PotionTargetDataType]
     
-    @State private var isLayoutInitialized = false
+    @Binding var isLayoutInitialized: Bool
     
     var body: some View {
         ZStack {
@@ -299,8 +301,10 @@ struct WorkBenchOnly_PreviewContainer: View {
         PotionTargetDataType(colorName: "blue")
     ]
     
+    @State var isLayoutInitialized: Bool = false
+    
     var body: some View {
-        WorkBenchOnly(balls: $potionsList, targets: $targetList)
+        WorkBenchOnly(balls: $potionsList, targets: $targetList, isLayoutInitialized: $isLayoutInitialized)
     }
 }
 
