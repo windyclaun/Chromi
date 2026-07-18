@@ -16,11 +16,11 @@ struct NewWorkBench: View {
     let onMenu: () -> Void
     let onBack: () -> Void
     
-    @State var potionsList: [BallDataType]
-    @State var targetList: [PotionTargetDataType]
+    @State var potionsList: [PotionType]
+    @State var targetList: [TargetDataType]
     
-    private let initialBalls: [BallDataType]
-    private let initialTargets: [PotionTargetDataType]
+    private let initialBalls: [PotionType]
+    private let initialTargets: [TargetDataType]
     
     @State private var isPauseGame: Bool = false
     @State private var fruitYaw: Float = 0
@@ -32,8 +32,8 @@ struct NewWorkBench: View {
 
     init(
         modelName: String,
-        potionsList: [BallDataType],
-        targetList: [PotionTargetDataType],
+        potionsList: [PotionType],
+        targetList: [TargetDataType],
         
         onLevelCompleted: @escaping () -> Void = {},
         onRestart: @escaping () -> Void,
@@ -121,9 +121,9 @@ struct NewWorkBench: View {
     }
     
     private func resetGameLevel() {
-        self.potionsList = initialBalls.map { BallDataType(colorName: $0.colorName, position: .zero) }
+        self.potionsList = initialBalls.map { PotionType(colorName: $0.colorName, position: .zero) }
         
-        self.targetList = initialTargets.map { PotionTargetDataType(colorName: $0.colorName, isMatched: false, globalFrame: .zero) }
+        self.targetList = initialTargets.map { TargetDataType(colorName: $0.colorName, isMatched: false, globalFrame: .zero) }
         
         self.isReset = false
     }
@@ -237,7 +237,6 @@ struct FruitModelView: View {
     var body: some View {
         GeometryReader { geometry in
             let isLandscape = geometry.size.width > geometry.size.height
-            let topAreaHeight = geometry.size.height * 0.34
             let fruitHeightSize = geometry.size.height * (isLandscape ? 0.38 : 0.4)
             let topPadding = fruitHeightSize * 0.08
             
@@ -290,15 +289,15 @@ struct FruitModelView: View {
 }
 
 struct Test_PreviewContainer: View {
-    @State var potionsList: [BallDataType] = [
-        BallDataType(colorName: "red"),
-        BallDataType(colorName: "orange"),
-        BallDataType(colorName: "red")
+    @State var potionsList: [PotionType] = [
+        PotionType(colorName: "red"),
+        PotionType(colorName: "orange"),
+        PotionType(colorName: "red")
     ]
     
-    @State var targetList: [PotionTargetDataType] = [
-        PotionTargetDataType(colorName: "red"),
-        PotionTargetDataType(colorName: "blue")
+    @State var targetList: [TargetDataType] = [
+        TargetDataType(colorName: "red"),
+        TargetDataType(colorName: "blue")
     ]
     
     var body: some View {

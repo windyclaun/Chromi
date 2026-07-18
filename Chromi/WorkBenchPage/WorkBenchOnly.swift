@@ -7,13 +7,13 @@
 
 import SwiftUI
 
-struct BallDataType: Identifiable, Equatable {
+struct PotionType: Identifiable, Equatable {
     let id = UUID()
     var colorName: String // "red", "blue", atau "purple"
     var position: CGPoint = .zero
 }
 
-struct PotionTargetDataType: Identifiable {
+struct TargetDataType: Identifiable {
     let id = UUID()
     var colorName: String // "red" atau "blue"
     var isMatched: Bool = false
@@ -21,8 +21,8 @@ struct PotionTargetDataType: Identifiable {
 }
 
 struct WorkBenchOnly: View {
-    @Binding var balls: [BallDataType]
-    @Binding var targets: [PotionTargetDataType]
+    @Binding var balls: [PotionType]
+    @Binding var targets: [TargetDataType]
     
     @Binding var isLayoutInitialized: Bool
     
@@ -41,8 +41,8 @@ struct WorkBenchOnly: View {
 }
 
 struct WorkBench: View {
-    @Binding var balls: [BallDataType]
-    @Binding var targets: [PotionTargetDataType]
+    @Binding var balls: [PotionType]
+    @Binding var targets: [TargetDataType]
     
     @Binding var isLayoutInitialized: Bool
     
@@ -110,7 +110,7 @@ struct WorkBench: View {
 }
 
 struct TargetPotionBox: View {
-    @Binding var targetPotion: PotionTargetDataType
+    @Binding var targetPotion: TargetDataType
     
     var body: some View {
         ZStack {
@@ -144,9 +144,9 @@ struct TargetPotionBox: View {
 }
 
 struct InteractiveBallView: View {
-    var ball: BallDataType
-    @Binding var allBalls: [BallDataType]
-    @Binding var targets: [PotionTargetDataType]
+    var ball: PotionType
+    @Binding var allBalls: [PotionType]
+    @Binding var targets: [TargetDataType]
     
     @State private var dragOffset: CGSize = .zero
     
@@ -195,7 +195,7 @@ struct InteractiveBallView: View {
     }
     
     // Logika Mendeteksi apakah Bola dilepas di atas Target Potion Box
-    private func checkTargetDrop(at dropPoint: CGPoint, currentBall: BallDataType, currentIndex: Int) -> Bool {
+    private func checkTargetDrop(at dropPoint: CGPoint, currentBall: PotionType, currentIndex: Int) -> Bool {
         // Titik tengah bola saat di-drop
         let ballCenter = CGPoint(x: dropPoint.x + 35, y: dropPoint.y + 35)
         
@@ -214,7 +214,7 @@ struct InteractiveBallView: View {
     }
     
     // Logika Pencampuran Antar Bola (Merah + Biru = Ungu)
-    private func checkBallMerge(for activeBall: BallDataType, currentIndex: Int) {
+    private func checkBallMerge(for activeBall: PotionType, currentIndex: Int) {
         let mergeThreshold: CGFloat = 50.0
         
         let primaryColors: Set<String> = ["red", "blue", "yellow"]
@@ -290,15 +290,15 @@ struct InteractiveBallView: View {
 
 
 struct WorkBenchOnly_PreviewContainer: View {
-    @State var potionsList: [BallDataType] = [
-        BallDataType(colorName: "red"),
-        BallDataType(colorName: "yellow"),
-        BallDataType(colorName: "red")
+    @State var potionsList: [PotionType] = [
+        PotionType(colorName: "red"),
+        PotionType(colorName: "yellow"),
+        PotionType(colorName: "red")
     ]
     
-    @State var targetList: [PotionTargetDataType] = [
-        PotionTargetDataType(colorName: "red"),
-        PotionTargetDataType(colorName: "blue")
+    @State var targetList: [TargetDataType] = [
+        TargetDataType(colorName: "red"),
+        TargetDataType(colorName: "blue")
     ]
     
     @State var isLayoutInitialized: Bool = false
