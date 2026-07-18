@@ -8,11 +8,20 @@
 import SwiftUI
 
 struct PauseMenuView: View {
+    let onMainMenu: () -> Void
+    let onRestart: () -> Void
+    let onResume: () -> Void
+
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        PauseOverlayView(
+            onMainMenu: onMainMenu,
+            onRestart: onRestart,
+            onResume: onResume
+        )
+        .presentationBackground(.clear)
     }
 }
 
 #Preview {
-    PauseMenuView()
+    PauseMenuView(onMainMenu: {}, onRestart: {}, onResume: {})
 }

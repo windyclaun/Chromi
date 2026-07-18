@@ -21,10 +21,54 @@ struct TrianglePointer: Shape {
 
 // Helper Global Function untuk menangani muatan berkas gambar UIImage agar aman dari crash nama ekstensi
 func loadBundledImage(_ name: String) -> Image {
-    if let image = UIImage(named: name) ?? UIImage(named: name.replacingOccurrences(of: ".png", with: "")) {
+    if let image = bundledUIImage(named: name) {
         return Image(uiImage: image)
     }
     return Image(name)
+}
+
+func bundledUIImage(named name: String) -> UIImage? {
+    let normalizedName = name.replacingOccurrences(of: "\\", with: "/")
+
+    if let image = UIImage(named: normalizedName) {
+        return image
+    }
+
+    let path = normalizedName as NSString
+    let directory = path.deletingLastPathComponent
+    let fileName = path.lastPathComponent as NSString
+    let resourceName = fileName.deletingPathExtension
+    let fileExtension = fileName.pathExtension.isEmpty ? nil : fileName.pathExtension
+    let subdirectory = directory == "." || directory.isEmpty ? nil : directory
+
+    if let url = Bundle.main.url(forResource: resourceName, withExtension: fileExtension, subdirectory: subdirectory),
+       let image = UIImage(contentsOfFile: url.path) {
+        return image
+    }
+
+    if let subdirectory,
+       let url = Bundle.main.url(forResource: resourceName, withExtension: fileExtension, subdirectory: "Assets/\(subdirectory)"),
+       let image = UIImage(contentsOfFile: url.path) {
+        return image
+    }
+
+    if let resourceURL = Bundle.main.resourceURL {
+        let candidateURL = resourceURL.appendingPathComponent(normalizedName)
+        if let image = UIImage(contentsOfFile: candidateURL.path) {
+            return image
+        }
+
+        let assetsCandidateURL = resourceURL.appendingPathComponent("Assets").appendingPathComponent(normalizedName)
+        if let image = UIImage(contentsOfFile: assetsCandidateURL.path) {
+            return image
+        }
+    }
+
+    if let image = UIImage(named: resourceName) {
+        return image
+    }
+
+    return nil
 }
 struct PauseOverlayView: View {
     let onMainMenu: () -> Void

@@ -16,11 +16,11 @@ struct NewWorkBench: View {
     let onMenu: () -> Void
     let onBack: () -> Void
     
-    @State var potionsList: [PotionType]
-    @State var targetList: [TargetDataType]
+    @State var potionsList: [BallDataType]
+    @State var targetList: [PotionTargetDataType]
     
-    private let initialBalls: [PotionType]
-    private let initialTargets: [TargetDataType]
+    private let initialBalls: [BallDataType]
+    private let initialTargets: [PotionTargetDataType]
     
     @State private var isPauseGame: Bool = false
     @State private var fruitYaw: Float = 0
@@ -32,8 +32,8 @@ struct NewWorkBench: View {
 
     init(
         modelName: String,
-        potionsList: [PotionType],
-        targetList: [TargetDataType],
+        potionsList: [BallDataType],
+        targetList: [PotionTargetDataType],
         
         onLevelCompleted: @escaping () -> Void = {},
         onRestart: @escaping () -> Void,
@@ -72,9 +72,14 @@ struct NewWorkBench: View {
             )
             
             WorkBenchTopButton(onBack: onBack, onRestart: resetGameLevel, isPauseGame: $isPauseGame)
+                .zIndex(10)
         }
         .onAppear {
             isFruitFloating = true
+        }
+        .onChange(of: targetList.map(\.isMatched)) { _, matchedStates in
+            guard !matchedStates.isEmpty, matchedStates.allSatisfy({ $0 }) else { return }
+            showSuccessPage = true
         }
         .fullScreenCover(isPresented: $showSuccessPage) {
             SuccessPageView(
@@ -87,6 +92,7 @@ struct NewWorkBench: View {
                 },
                 onRestart: {
                     showSuccessPage = false
+                    resetGameLevel()
                     onRestart()
                 },
                 onNextLevel: {
@@ -99,31 +105,28 @@ struct NewWorkBench: View {
                 },
             )
         }
-        .sheet(isPresented: $isPauseGame) {
+        .fullScreenCover(isPresented: $isPauseGame) {
             PauseMenuView(
-//                onBack: {
-//                    showSuccessPage = false
-//                },
-//                onRestart: {
-//                    showSuccessPage = false
-//                    onRestart()
-//                },
-//                onNextLevel: {
-//                    showSuccessPage = false
-//                    onNextLevel()
-//                },
-//                onMenu: {
-//                    showSuccessPage = false
-//                    onMenu()
-//                },
+                onMainMenu: {
+                    isPauseGame = false
+                    onMenu()
+                },
+                onRestart: {
+                    resetGameLevel()
+                    isPauseGame = false
+                    onRestart()
+                },
+                onResume: {
+                    isPauseGame = false
+                }
             )
         }
     }
     
     private func resetGameLevel() {
-        self.potionsList = initialBalls.map { PotionType(colorName: $0.colorName, position: .zero) }
+        self.potionsList = initialBalls.map { BallDataType(colorName: $0.colorName, isUnlocked: $0.isUnlocked, position: .zero) }
         
-        self.targetList = initialTargets.map { TargetDataType(colorName: $0.colorName, isMatched: false, globalFrame: .zero) }
+        self.targetList = initialTargets.map { PotionTargetDataType(colorName: $0.colorName, isMatched: false, globalFrame: .zero) }
         
         self.isReset = false
     }

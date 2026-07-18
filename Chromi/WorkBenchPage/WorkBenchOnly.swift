@@ -9,15 +9,147 @@ import SwiftUI
 
 struct PotionType: Identifiable, Equatable {
     let id = UUID()
-    var colorName: String // "red", "blue", atau "purple"
+    var colorName: String
+    var isUnlocked: Bool = true
     var position: CGPoint = .zero
 }
 
 struct TargetDataType: Identifiable {
     let id = UUID()
-    var colorName: String // "red" atau "blue"
+    var colorName: String
     var isMatched: Bool = false
-    var globalFrame: CGRect = .zero // Menyimpan area deteksi kotak ramuan di layar
+    var globalFrame: CGRect = .zero
+}
+
+struct WorkbenchLevelConfig {
+    let targets: [String]
+    let unlockedPotions: [String]
+    let lockedPotions: [String]
+}
+
+enum PotionAssetCatalog {
+    static let primaryColorNames = ["red", "yellow", "blue"]
+    static let secondaryColorNames = ["orange", "purple", "green", "brown"]
+    static let modifierColorNames = ["min_red", "min_blue", "min_yellow"]
+
+    static var allColorNames: [String] {
+        primaryColorNames + secondaryColorNames + modifierColorNames
+    }
+
+    static func potions(for modelName: String) -> [BallDataType] {
+        let config = WorkbenchLevelRecipe.config(for: modelName)
+        let unlockedSet = Set(config.unlockedPotions)
+        let orderedNames = unique(config.unlockedPotions + config.lockedPotions)
+
+        return orderedNames.map { colorName in
+            BallDataType(colorName: colorName, isUnlocked: unlockedSet.contains(colorName))
+        }
+    }
+
+    static func imageName(for colorName: String) -> String {
+        "potions/\(colorName).png"
+    }
+
+    static func displayName(for colorName: String) -> String {
+        switch colorName {
+        case "red": return "Merah"
+        case "yellow": return "Kuning"
+        case "blue": return "Biru"
+        case "orange": return "Oranye"
+        case "purple": return "Ungu"
+        case "green": return "Hijau"
+        case "brown": return "Cokelat"
+        case "min_red": return "-Merah"
+        case "min_blue": return "-Biru"
+        case "min_yellow": return "-Kuning"
+        default: return colorName
+        }
+    }
+
+    static func tint(for colorName: String) -> Color {
+        switch colorName {
+        case "red", "min_red": return Color(red: 0.96, green: 0.18, blue: 0.26)
+        case "yellow", "min_yellow": return Color(red: 1.0, green: 0.82, blue: 0.12)
+        case "blue", "min_blue": return Color(red: 0.22, green: 0.48, blue: 1.0)
+        case "orange": return Color(red: 1.0, green: 0.48, blue: 0.08)
+        case "purple": return Color(red: 0.62, green: 0.28, blue: 0.92)
+        case "green": return Color(red: 0.18, green: 0.72, blue: 0.32)
+        case "brown": return Color(red: 0.44, green: 0.24, blue: 0.1)
+        default: return .gray
+        }
+    }
+
+    private static func unique(_ names: [String]) -> [String] {
+        var seen = Set<String>()
+        return names.filter { seen.insert($0).inserted }
+    }
+}
+
+enum WorkBenchPotionLayout {
+    static let size: CGFloat = 104
+    static let spacing: CGFloat = 14
+    static let maxRows = 3
+    static let shelfWidth: CGFloat = 510
+    static let shelfHeight: CGFloat = size * CGFloat(maxRows) + spacing * CGFloat(maxRows - 1)
+}
+
+enum WorkbenchLevelRecipe {
+    static func config(for modelName: String) -> WorkbenchLevelConfig {
+        switch modelName {
+        case "Apple":
+            return WorkbenchLevelConfig(
+                targets: ["red"],
+                unlockedPotions: ["red", "yellow", "blue"],
+                lockedPotions: ["orange", "purple", "green", "brown", "min_red", "min_blue", "min_yellow"]
+            )
+        case "Watermelon":
+            return WorkbenchLevelConfig(
+                targets: ["green"],
+                unlockedPotions: ["red", "yellow", "blue"],
+                lockedPotions: ["orange", "purple", "green", "brown", "min_red", "min_blue", "min_yellow"]
+            )
+        case "Orange":
+            return WorkbenchLevelConfig(
+                targets: ["orange", "green"],
+                unlockedPotions: ["red", "yellow", "blue", "green"],
+                lockedPotions: ["purple", "orange", "brown", "min_red", "min_blue", "min_yellow"]
+            )
+        case "Eggplant":
+            return WorkbenchLevelConfig(
+                targets: ["purple", "green"],
+                unlockedPotions: ["red", "yellow", "blue", "green", "orange"],
+                lockedPotions: ["purple", "brown", "min_red", "min_blue", "min_yellow"]
+            )
+        case "Lemon1":
+            return WorkbenchLevelConfig(
+                targets: ["yellow"],
+                unlockedPotions: ["orange", "purple", "red", "blue", "green", "min_red", "min_blue", "min_yellow"],
+                lockedPotions: ["yellow", "brown"]
+            )
+        case "Coconut":
+            return WorkbenchLevelConfig(
+                targets: ["brown"],
+                unlockedPotions: ["red", "yellow", "blue", "orange", "purple", "green", "min_red", "min_blue", "min_yellow"],
+                lockedPotions: ["brown"]
+            )
+        case "Avocado":
+            return WorkbenchLevelConfig(
+                targets: ["green"],
+                unlockedPotions: ["purple", "yellow", "blue", "min_red", "min_blue", "min_yellow"],
+                lockedPotions: ["red", "orange", "green", "brown"]
+            )
+        default:
+            return WorkbenchLevelConfig(
+                targets: ["red"],
+                unlockedPotions: ["red", "yellow", "blue"],
+                lockedPotions: ["orange", "purple", "green", "brown", "min_red", "min_blue", "min_yellow"]
+            )
+        }
+    }
+
+    static func targets(for modelName: String) -> [PotionTargetDataType] {
+        config(for: modelName).targets.map { PotionTargetDataType(colorName: $0) }
+    }
 }
 
 struct WorkBenchOnly: View {
@@ -25,9 +157,9 @@ struct WorkBenchOnly: View {
     @Binding var targets: [TargetDataType]
     
     @Binding var isLayoutInitialized: Bool
-    
+
     var body: some View {
-        VStack (spacing: 0){
+        VStack(spacing: 0) {
             Spacer()
             loadBundledImage("reactionSmileNew.PNG")
                 .resizable()
@@ -45,7 +177,7 @@ struct WorkBench: View {
     @Binding var targets: [TargetDataType]
     
     @Binding var isLayoutInitialized: Bool
-    
+
     var body: some View {
         ZStack {
             loadBundledImage("table.png")
@@ -54,48 +186,53 @@ struct WorkBench: View {
                 .frame(maxWidth: .infinity)
                 .clipped()
                 .ignoresSafeArea()
-            
-            GeometryReader { viewGeo in
+
+            GeometryReader { _ in
                 ZStack(alignment: .bottomLeading) {
-                    
-                    // KANAN: Kotak Target Potion
                     HStack(spacing: 0) {
                         Spacer()
                         HStack(spacing: 24) {
                             ForEach(targets.indices, id: \.self) { index in
                                 TargetPotionBox(targetPotion: $targets[index])
-                                
                             }
                         }
                         .frame(maxWidth: 500)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    
-                    // KIRI: Inisialisasi Posisi Awal Bola (Hanya sekali saat muncul)
+
                     if !isLayoutInitialized {
                         HStack {
-                            VStack(spacing: 15) {
+                            LazyHGrid(
+                                rows: Array(
+                                    repeating: GridItem(.fixed(WorkBenchPotionLayout.size), spacing: WorkBenchPotionLayout.spacing),
+                                    count: WorkBenchPotionLayout.maxRows
+                                ),
+                                spacing: WorkBenchPotionLayout.spacing
+                            ) {
                                 ForEach(balls.indices, id: \.self) { index in
                                     GeometryReader { itemGeo in
                                         Color.clear
                                             .onAppear {
-                                                let localFrame = itemGeo.frame(in: .named("TableSpace"))
-                                                balls[index].position = CGPoint(x: localFrame.minX, y: localFrame.minY)
-                                                
-                                                if index == balls.count - 1 {
-                                                    isLayoutInitialized = true
+                                                DispatchQueue.main.async {
+                                                    let localFrame = itemGeo.frame(in: .named("TableSpace"))
+                                                    balls[index].position = CGPoint(x: localFrame.minX, y: localFrame.minY)
+
+                                                    if index == balls.count - 1 {
+                                                        isLayoutInitialized = true
+                                                    }
                                                 }
                                             }
                                     }
-                                    .frame(width: 70, height: 70)
+                                    .frame(width: WorkBenchPotionLayout.size, height: WorkBenchPotionLayout.size)
                                 }
                             }
-                            .padding(.leading, 40) // Memastikan letak bola ada di sisi kiri meja
+                            .padding(.leading, 36)
+                            .frame(width: WorkBenchPotionLayout.shelfWidth, height: WorkBenchPotionLayout.shelfHeight, alignment: .leading)
+
                             Spacer()
                         }
                         .frame(maxHeight: .infinity)
                     } else {
-                        // Lapisan Utama Interaksi Bola (Sandbox Bebas)
                         ForEach(balls) { ball in
                             InteractiveBallView(ball: ball, allBalls: $balls, targets: $targets)
                         }
@@ -104,7 +241,6 @@ struct WorkBench: View {
             }
             .coordinateSpace(name: "TableSpace")
             .frame(maxWidth: .infinity, maxHeight: 450)
-            
         }
     }
 }
@@ -119,27 +255,68 @@ struct TargetPotionBox: View {
                 .scaledToFit()
                 .frame(maxWidth: 180)
                 .clipped()
-            
-            //Target Potion
-            loadBundledImage("\(targetPotion.colorName)")
-                .resizable()
-                .scaledToFit()
-                .frame(maxWidth: 140)
-                .clipped()
-                .opacity(targetPotion.isMatched ? 1.0 : 0.4)
+
+            PotionImageView(colorName: targetPotion.colorName)
+                .frame(width: 140, height: 140)
+                .opacity(targetPotion.isMatched ? 1.0 : 0.34)
+                .saturation(targetPotion.isMatched ? 1.0 : 0.25)
         }
         .background(
-            // Membaca posisi absolut kotak ramuan di layar dan merekamnya ke struktur data
             GeometryReader { geo in
                 Color.clear
                     .onAppear {
                         targetPotion.globalFrame = geo.frame(in: .named("TableSpace"))
                     }
-                    .onChange(of: geo.frame(in: .named("TableSpace"))) { newFrame in
+                    .onChange(of: geo.frame(in: .named("TableSpace"))) { _, newFrame in
                         targetPotion.globalFrame = newFrame
                     }
             }
         )
+    }
+}
+
+struct PotionImageView: View {
+    let colorName: String
+
+    var body: some View {
+        if colorName.hasPrefix("min_") {
+            minusPotionPlaceholder
+        } else {
+            loadBundledImage(PotionAssetCatalog.imageName(for: colorName))
+                .resizable()
+                .scaledToFit()
+        }
+    }
+
+    private var minusPotionPlaceholder: some View {
+        let tint = PotionAssetCatalog.tint(for: colorName)
+
+        return ZStack {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [tint.opacity(0.92), tint.opacity(0.58)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(Color.white.opacity(0.42), lineWidth: 3)
+                )
+
+            VStack(spacing: 3) {
+                Image(systemName: "minus.circle.fill")
+                    .font(.system(size: 25, weight: .black))
+                Text(PotionAssetCatalog.displayName(for: colorName))
+                    .font(.system(size: 10, weight: .black, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
+            .foregroundStyle(.white)
+            .shadow(color: Color.black.opacity(0.22), radius: 2, x: 0, y: 1)
+            .padding(.horizontal, 6)
+        }
     }
 }
 
@@ -149,25 +326,12 @@ struct InteractiveBallView: View {
     @Binding var targets: [TargetDataType]
     
     @State private var dragOffset: CGSize = .zero
-    
-    // Konversi string nama warna menjadi tipe Color SwiftUI
-    private var ballColor: Color {
-        switch ball.colorName {
-        case "red": return .red
-        case "blue": return .blue
-        case "purple": return .purple
-        default: return .gray
-        }
-    }
+
+    private let potionSize = WorkBenchPotionLayout.size
 
     var body: some View {
-        // Menggunakan Circle bawaan sebagai representasi visual bola Anda
-        loadBundledImage("\(ball.colorName)")
-            .resizable()
-            .scaledToFit()
-            .frame(maxWidth: 70)
-            // Ditambah 35 agar titik tengah koordinat objek berada tepat di tengah lingkaran berukuran 70x70
-            .position(x: ball.position.x + 35, y: ball.position.y + 35)
+        potionContent
+            .position(x: ball.position.x + potionSize / 2, y: ball.position.y + potionSize / 2)
             .offset(dragOffset)
             .gesture(
                 DragGesture(coordinateSpace: .named("TableSpace"))
@@ -216,78 +380,81 @@ struct InteractiveBallView: View {
     // Logika Pencampuran Antar Bola (Merah + Biru = Ungu)
     private func checkBallMerge(for activeBall: PotionType, currentIndex: Int) {
         let mergeThreshold: CGFloat = 50.0
-        
-        let primaryColors: Set<String> = ["red", "blue", "yellow"]
-        
+
         for index in allBalls.indices {
             if index == currentIndex { continue }
-            
+
             let targetBall = allBalls[index]
+            guard targetBall.isUnlocked else { continue }
+
             let distance = sqrt(pow(activeBall.position.x - targetBall.position.x, 2) + pow(activeBall.position.y - targetBall.position.y, 2))
-            
-            if distance < mergeThreshold {
-                let colorA = activeBall.colorName
-                let colorB = targetBall.colorName
-                
-                var finalColorTarget: String? = nil
-                
-                // ==========================================
-                // LOGIKA 1: PENGURANGAN WARNA (SECONDARY - PRIMARY)
-                // ==========================================
-                
-                // Kasus 1: Purple (Red + Blue) dikurangi salah satunya
-                if (colorA == "purple" && colorB == "min_blue") || (colorA == "min_blue" && colorB == "purple") {
-                    finalColorTarget = "red"
-                } else if (colorA == "purple" && colorB == "min_red") || (colorA == "min_red" && colorB == "purple") {
-                    finalColorTarget = "blue"
-                }
-                
-                // Kasus 2: Orange (Red + Yellow) dikurangi salah satunya
-                else if (colorA == "orange" && colorB == "min_red") || (colorA == "min_red" && colorB == "orange") {
-                    finalColorTarget = "yellow"
-                } else if (colorA == "orange" && colorB == "min_yellow") || (colorA == "min_yellow" && colorB == "orange") {
-                    finalColorTarget = "red"
-                }
-                
-                // Kasus 3: Green (Blue + Yellow) dikurangi salah satunya
-                else if (colorA == "green" && colorB == "min_blue") || (colorA == "min_blue" && colorB == "green") {
-                    finalColorTarget = "yellow"
-                } else if (colorA == "green" && colorB == "min_yellow") || (colorA == "min_yellow" && colorB == "green") {
-                    finalColorTarget = "blue"
-                }
-                
-                // ==========================================
-                // LOGIKA 2: PENAMBAHAN WARNA (PRIMARY + PRIMARY)
-                // ==========================================
-                else if (colorA == "red" && colorB == "blue") || (colorA == "blue" && colorB == "red") {
-                    finalColorTarget = "purple"
-                } else if (colorA == "red" && colorB == "yellow") || (colorA == "yellow" && colorB == "red") {
-                    finalColorTarget = "orange"
-                } else if (colorA == "blue" && colorB == "yellow") || (colorA == "yellow" && colorB == "blue") {
-                    finalColorTarget = "green"
-                }
-                
-                // ==========================================
-                // LOGIKA 3: KONDISI GAGAL (COKLAT)
-                // ==========================================
-                else if primaryColors.contains(colorA) || primaryColors.contains(colorB) {
-                    finalColorTarget = "brown"
-                }
-                
-                // Eksekusi perubahan ke dalam array jika kombinasi valid ditemukan
-                if let resultColor = finalColorTarget {
-                    // Bola target berubah menjadi warna sisa hasil pengurangan/penambahan
-                    allBalls[index].colorName = resultColor
-                    
-                    // Hapus bola aktif yang sedang di-drag karena sudah melebur ke dalam proses operasi
-                    allBalls.removeAll(where: { $0.id == activeBall.id })
-                    break
-                }
+            guard distance < mergeThreshold else { continue }
+
+            if let resultColor = mixedColor(activeBall.colorName, targetBall.colorName) {
+                addMixedPotion(
+                    colorName: resultColor,
+                    from: activeBall.position,
+                    and: targetBall.position
+                )
+                break
             }
         }
     }
-}
 
+    private func addMixedPotion(colorName: String, from firstPosition: CGPoint, and secondPosition: CGPoint) {
+        let resultPosition = CGPoint(
+            x: (firstPosition.x + secondPosition.x) / 2,
+            y: (firstPosition.y + secondPosition.y) / 2
+        )
+
+        if let lockedIndex = allBalls.firstIndex(where: { $0.colorName == colorName && !$0.isUnlocked }) {
+            allBalls[lockedIndex].isUnlocked = true
+            allBalls[lockedIndex].position = resultPosition
+            return
+        }
+
+        if allBalls.contains(where: { $0.colorName == colorName && $0.isUnlocked }) {
+            return
+        }
+
+        allBalls.append(BallDataType(colorName: colorName, isUnlocked: true, position: resultPosition))
+    }
+
+    private func mixedColor(_ colorA: String, _ colorB: String) -> String? {
+        let pair = Set([colorA, colorB])
+
+        switch pair {
+        case Set(["red", "blue"]):
+            return "purple"
+        case Set(["red", "yellow"]):
+            return "orange"
+        case Set(["blue", "yellow"]):
+            return "green"
+        case Set(["purple", "min_red"]):
+            return "blue"
+        case Set(["purple", "min_blue"]):
+            return "red"
+        case Set(["orange", "min_red"]):
+            return "yellow"
+        case Set(["orange", "min_yellow"]):
+            return "red"
+        case Set(["green", "min_blue"]):
+            return "yellow"
+        case Set(["green", "min_yellow"]):
+            return "blue"
+        default:
+            if shouldBecomeBrown(colorA, colorB) {
+                return "brown"
+            }
+            return nil
+        }
+    }
+
+    private func shouldBecomeBrown(_ colorA: String, _ colorB: String) -> Bool {
+        let normalColors = Set(PotionAssetCatalog.primaryColorNames + PotionAssetCatalog.secondaryColorNames.filter { $0 != "brown" })
+        return normalColors.contains(colorA) && normalColors.contains(colorB)
+    }
+}
 
 struct WorkBenchOnly_PreviewContainer: View {
     @State var potionsList: [PotionType] = [
@@ -302,7 +469,7 @@ struct WorkBenchOnly_PreviewContainer: View {
     ]
     
     @State var isLayoutInitialized: Bool = false
-    
+
     var body: some View {
         WorkBenchOnly(balls: $potionsList, targets: $targetList, isLayoutInitialized: $isLayoutInitialized)
     }

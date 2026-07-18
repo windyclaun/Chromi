@@ -86,14 +86,14 @@ struct ColoringPage: View {
         }
         .ignoresSafeArea()
         .fullScreenCover(isPresented: $showWorkbenchPage) {
-            WorkBenchView(
+            NewWorkBench(
                 modelName: modelName,
+                potionsList: PotionAssetCatalog.potions(for: modelName),
+                targetList: WorkbenchLevelRecipe.targets(for: modelName),
                 onLevelCompleted: {
                     onLevelCompleted()
                 },
-                onRestart: {
-                    showWorkbenchPage = false
-                },
+                onRestart: {},
                 onNextLevel: {
                     showWorkbenchPage = false
                     onNextLevel()
