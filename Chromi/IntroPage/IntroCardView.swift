@@ -156,41 +156,44 @@ struct IntroCardView: View {
     }
 
     private func nextButton(width: CGFloat) -> some View {
-        Button(action: {
+        introActionButton(title: "Next", systemImage: "arrow.right.circle.fill", width: width) {
             SoundEffectPlayer.shared.play(named: "ClickNextIntro", fileExtension: "mp3")
             goToNextPage()
-        }) {
-            ZStack {
-                Capsule().fill(LinearGradient(colors: [Color(red: 1.0, green: 0.78, blue: 0.24), Color(red: 0.74, green: 0.32, blue: 1.0), Color(red: 0.42, green: 0.16, blue: 0.86)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                Capsule().fill(Color.white.opacity(0.26)).frame(height: 18).padding(.horizontal, 18).padding(.top, 7).frame(maxHeight: .infinity, alignment: .top)
-                HStack(spacing: 10) {
-                    Text("Next")
-                    Image(systemName: "arrow.right.circle.fill").font(.system(size: 24, weight: .black))
-                }
-                .font(.system(size: 20, weight: .heavy, design: .rounded))
-                .foregroundStyle(.white)
-            }
-            .frame(width: width, height: 58)
-            .overlay(Capsule().stroke(Color.white.opacity(0.48), lineWidth: 3))
-            .shadow(color: Color.purple.opacity(0.45), radius: 18, x: 0, y: 10)
         }
-        .buttonStyle(LandingButtonStyle())
     }
 
     private func letsPlayButton(width: CGFloat) -> some View {
-        Button(action: {
+        introActionButton(title: "Let's Play!", systemImage: "gamecontroller.fill", width: width) {
             SoundEffectPlayer.shared.play(named: "ClickStartSound", fileExtension: "wav")
             onLetsPlay()
-        }) {
-            HStack(spacing: 9) {
-                Text("Let's Play!")
-                Image(systemName: "gamecontroller.fill")
+        }
+    }
+
+    private func introActionButton(title: String, systemImage: String, width: CGFloat, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            ZStack {
+                Capsule()
+                    .fill(Color(red: 1.0, green: 0.78, blue: 0.24))
+                Capsule()
+                    .fill(Color.white.opacity(0.24))
+                    .frame(height: 18)
+                    .padding(.horizontal, 18)
+                    .padding(.top, 7)
+                    .frame(maxHeight: .infinity, alignment: .top)
+                HStack(spacing: 10) {
+                    Text(title)
+                    Image(systemName: systemImage)
+                        .font(.system(size: 22, weight: .black))
+                }
+                .font(.system(size: 19, weight: .heavy, design: .rounded))
+                .foregroundStyle(Color(red: 0.34, green: 0.12, blue: 0.68))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .padding(.horizontal, 12)
             }
-            .font(.system(size: 18, weight: .heavy, design: .rounded))
-            .foregroundStyle(.white)
-            .frame(width: width, height: 56)
-            .background(LinearGradient(colors: [Color(red: 1.0, green: 0.75, blue: 0.2), Color(red: 0.68, green: 0.38, blue: 1.0), Color(red: 0.42, green: 0.2, blue: 0.82)], startPoint: .topLeading, endPoint: .bottomTrailing), in: Capsule())
-            .overlay(Capsule().stroke(Color.white.opacity(0.38), lineWidth: 3))
+            .frame(width: width, height: 58)
+            .overlay(Capsule().stroke(Color.white.opacity(0.58), lineWidth: 3))
+            .shadow(color: Color.purple.opacity(0.32), radius: 14, x: 0, y: 8)
         }
         .buttonStyle(LandingButtonStyle())
     }

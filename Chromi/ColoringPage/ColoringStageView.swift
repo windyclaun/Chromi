@@ -54,26 +54,16 @@ struct ColoringStageView: View {
                 .background(Color.black.opacity(0.18), in: Capsule())
 
                 Button(action: onOpenWorkbench) {
-                    HStack(spacing: 10) {
-                        Image(systemName: "paintpalette.fill")
-                        Text("Buka Work Bench")
-                    }
-                    .font(.system(size: 17, weight: .black, design: .rounded))
-                    .foregroundStyle(Color(red: 0.34, green: 0.07, blue: 0.68))
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 12)
-                    .background(
-                        LinearGradient(
-                            colors: [Color.white, Color(red: 1.0, green: 0.9, blue: 0.34)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        in: Capsule()
+                    ChromiStartButtonLabel(
+                        title: "WORK BENCH",
+                        systemImage: "paintpalette.fill",
+                        width: min(geometrySize.width * (isLandscape ? 0.24 : 0.54), 260),
+                        height: 58,
+                        fontSize: 19,
+                        iconSize: 18
                     )
-                    .overlay(Capsule().stroke(Color.white.opacity(0.82), lineWidth: 2))
-                    .shadow(color: Color.yellow.opacity(0.36), radius: 12, x: 0, y: 6)
                 }
-                .buttonStyle(LevelButtonStyle())
+                .buttonStyle(AnimatedStartButtonStyle())
 
                 objectShadow
             }

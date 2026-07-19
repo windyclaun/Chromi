@@ -135,19 +135,7 @@ struct ColoringPage: View {
 
             Spacer()
 
-            Button(action: pauseLevel) {
-                Image(systemName: "pause.fill")
-                    .font(.system(size: 18, weight: .black))
-                    .foregroundStyle(.white)
-                    .frame(width: 50, height: 50)
-                    .background(Color.white.opacity(0.18), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(Color.white.opacity(0.35), lineWidth: 2)
-                    )
-                    .shadow(color: Color.black.opacity(0.24), radius: 10, x: 0, y: 6)
-            }
-            .buttonStyle(LevelButtonStyle())
+            WorkBenchButton(symbolName: "pause.fill", action: pauseLevel)
         }
     }
 

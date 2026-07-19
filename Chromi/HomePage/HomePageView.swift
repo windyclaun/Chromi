@@ -130,19 +130,7 @@ struct HomePageView: View {
 
     private func startButton(width: CGFloat) -> some View {
         Button(action: startGame) {
-            HStack(spacing: 10) {
-                Image(systemName: "play.fill").font(.system(size: 25, weight: .bold))
-                Text("START")
-                    .font(.system(size: 35, weight: .heavy, design: .rounded))
-            }
-            .foregroundStyle(Color(red: 0.24, green: 0.1, blue: 0.55))
-            .frame(width: width, height: 78)
-            .background(LinearGradient(colors: [Color(red: 1.0, green: 0.92, blue: 0.08), Color(red: 0.92, green: 0.66, blue: 0.09)], startPoint: .top, endPoint: .bottom))
-            .clipShape(Capsule())
-            .overlay(Capsule().stroke(Color.white.opacity(0.75), lineWidth: 5))
-            .overlay(alignment: .topLeading) {
-                Capsule().fill(Color.white.opacity(0.28)).frame(height: 22).padding(.horizontal, 18).padding(.top, 8)
-            }
+            ChromiStartButtonLabel(title: "START", systemImage: "play.fill", width: width)
         }
         .buttonStyle(AnimatedStartButtonStyle())
     }

@@ -26,6 +26,38 @@ struct AnimatedStartButtonStyle: ButtonStyle {
     }
 }
 
+struct ChromiStartButtonLabel: View {
+    let title: String
+    let systemImage: String
+    let width: CGFloat
+    var height: CGFloat = 78
+    var fontSize: CGFloat = 35
+    var iconSize: CGFloat = 25
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: systemImage)
+                .font(.system(size: iconSize, weight: .bold))
+            Text(title)
+                .font(.system(size: fontSize, weight: .heavy, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+        }
+        .foregroundStyle(Color(red: 0.24, green: 0.1, blue: 0.55))
+        .frame(width: width, height: height)
+        .background(LinearGradient(colors: [Color(red: 1.0, green: 0.92, blue: 0.08), Color(red: 0.92, green: 0.66, blue: 0.09)], startPoint: .top, endPoint: .bottom))
+        .clipShape(Capsule())
+        .overlay(Capsule().stroke(Color.white.opacity(0.75), lineWidth: 5))
+        .overlay(alignment: .topLeading) {
+            Capsule()
+                .fill(Color.white.opacity(0.28))
+                .frame(height: min(22, height * 0.28))
+                .padding(.horizontal, 18)
+                .padding(.top, 8)
+        }
+    }
+}
+
 struct SparkleHalo: View {
     let width: CGFloat
     let height: CGFloat
