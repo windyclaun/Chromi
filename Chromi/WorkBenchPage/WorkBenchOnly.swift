@@ -52,16 +52,16 @@ enum PotionAssetCatalog {
 
     static func displayName(for colorName: String) -> String {
         switch colorName {
-        case "red": return "Merah"
-        case "yellow": return "Kuning"
-        case "blue": return "Biru"
-        case "orange": return "Oranye"
-        case "purple": return "Ungu"
-        case "green": return "Hijau"
-        case "brown": return "Cokelat"
-        case "min_red": return "-Merah"
-        case "min_blue": return "-Biru"
-        case "min_yellow": return "-Kuning"
+        case "red": return "Red"
+        case "yellow": return "Yellow"
+        case "blue": return "Blue"
+        case "orange": return "Orange"
+        case "purple": return "Purple"
+        case "green": return "Green"
+        case "brown": return "Brown"
+        case "min_red": return "-Red"
+        case "min_blue": return "-Blue"
+        case "min_yellow": return "-Yellow"
         default: return colorName
         }
     }
@@ -392,6 +392,7 @@ struct InteractiveBallView: View {
             if targets[i].globalFrame.contains(ballCenter) {
                 // Periksa kesamaan warna antara bola dan target
                 if targets[i].colorName == currentBall.colorName {
+                    SoundEffectPlayer.shared.playColor(named: currentBall.colorName)
                     targets[i].isMatched = true // Ubah opacity ramuan target menjadi 1
                     allBalls.remove(at: currentIndex) // Hapus bola dari meja
                     return true
@@ -432,6 +433,7 @@ struct InteractiveBallView: View {
         )
 
         if let lockedIndex = allBalls.firstIndex(where: { $0.colorName == colorName && !$0.isUnlocked }) {
+            SoundEffectPlayer.shared.playColor(named: colorName)
             allBalls[lockedIndex].isUnlocked = true
             allBalls[lockedIndex].position = resultPosition
             return
@@ -441,6 +443,7 @@ struct InteractiveBallView: View {
             return
         }
 
+        SoundEffectPlayer.shared.playColor(named: colorName)
         allBalls.append(PotionType(colorName: colorName, isUnlocked: true, position: resultPosition))
     }
 

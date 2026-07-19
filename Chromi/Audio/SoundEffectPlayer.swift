@@ -16,8 +16,8 @@ final class SoundEffectPlayer {
 
     private init() {}
 
-    func play(named resourceName: String, fileExtension: String) {
-        guard let url = Bundle.main.url(forResource: resourceName, withExtension: fileExtension) else {
+    func play(named resourceName: String, fileExtension: String, subdirectory: String? = nil) {
+        guard let url = Bundle.main.url(forResource: resourceName, withExtension: fileExtension, subdirectory: subdirectory) else {
             print("Sound effect not found: \(resourceName).\(fileExtension)")
             return
         }
@@ -36,5 +36,10 @@ final class SoundEffectPlayer {
         } catch {
             print("Failed to play sound effect: \(error.localizedDescription)")
         }
+    }
+
+    func playColor(named colorName: String) {
+        let normalizedColorName = colorName.replacingOccurrences(of: "min_", with: "")
+        play(named: normalizedColorName, fileExtension: "m4a", subdirectory: "Colors")
     }
 }

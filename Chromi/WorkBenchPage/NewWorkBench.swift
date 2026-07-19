@@ -254,7 +254,7 @@ struct FruitModelView: View {
                 
                 HStack(spacing: 7) {
                     Image(systemName: "rotate.3d")
-                    Text("Geser ke semua arah untuk memutar")
+                    Text("Drag in any direction to rotate")
                 }
                 .font(.system(size: 13, weight: .black, design: .rounded))
                 .foregroundStyle(.white.opacity(0.94))

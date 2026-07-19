@@ -45,7 +45,7 @@ struct ColoringStageView: View {
 
                 HStack(spacing: 7) {
                     Image(systemName: "rotate.3d")
-                    Text("Geser ke semua arah untuk memutar")
+                    Text("Drag in any direction to rotate")
                 }
                 .font(.system(size: 13, weight: .black, design: .rounded))
                 .foregroundStyle(.white.opacity(0.92))
@@ -86,7 +86,7 @@ struct ColoringStageView: View {
             Image(systemName: "sparkles")
                 .font(.system(size: 17, weight: .black))
 
-            Text("Warnai aku dengan sihir warna!")
+            Text("Bring my colors back with magic!")
                 .font(.system(size: 18, weight: .black, design: .rounded))
                 .lineLimit(2)
                 .minimumScaleFactor(0.72)
@@ -127,7 +127,7 @@ struct ColoringStageView: View {
                 .offset(y: isMascotFloating ? -5 : 5)
                 .animation(.easeInOut(duration: 2.1).repeatForever(autoreverses: true), value: isMascotFloating)
 
-            Text("Ayo mix warna!")
+            Text("Let's mix colors!")
                 .font(.system(size: 15, weight: .black, design: .rounded))
                 .foregroundStyle(Color(red: 0.32, green: 0.08, blue: 0.68))
                 .padding(.horizontal, 12)
