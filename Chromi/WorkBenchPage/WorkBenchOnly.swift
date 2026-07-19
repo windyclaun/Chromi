@@ -94,42 +94,44 @@ enum WorkBenchPotionLayout {
 }
 
 enum WorkbenchLevelRecipe {
+    static let levelOnePlaceholder = WorkbenchLevelConfig(
+        targets: ["red"],
+        unlockedPotions: ["red", "yellow", "blue"],
+        lockedPotions: ["orange", "purple", "green", "brown", "min_red", "min_blue", "min_yellow"]
+    )
+
     static func config(for modelName: String) -> WorkbenchLevelConfig {
         switch modelName {
-        case "Apple":
-            return WorkbenchLevelConfig(
-                targets: ["red"],
-                unlockedPotions: ["red", "yellow", "blue"],
-                lockedPotions: ["orange", "purple", "green", "brown", "min_red", "min_blue", "min_yellow"]
-            )
+        case "Apple", "Placeholder8", "Placeholder9", "Placeholder10":
+            return levelOnePlaceholder
         case "Watermelon":
             return WorkbenchLevelConfig(
                 targets: ["green"],
                 unlockedPotions: ["red", "yellow", "blue"],
                 lockedPotions: ["orange", "purple", "green", "brown", "min_red", "min_blue", "min_yellow"]
             )
-        case "Coconut":
+        case "Orange":
             return WorkbenchLevelConfig(
-                targets: ["brown"],
-                unlockedPotions: ["red", "yellow", "blue"],
+                targets: ["orange", "green"],
+                unlockedPotions: ["red", "yellow", "blue", "green"],
                 lockedPotions: ["purple", "orange", "brown", "min_red", "min_blue", "min_yellow"]
             )
         case "Eggplant":
             return WorkbenchLevelConfig(
                 targets: ["purple", "green"],
-                unlockedPotions: ["red", "yellow", "blue", "brown", "min_yellow"],
+                unlockedPotions: ["red", "yellow", "blue", "green", "orange"],
                 lockedPotions: ["purple", "brown", "min_red", "min_blue", "min_yellow"]
             )
         case "Lemon1":
             return WorkbenchLevelConfig(
                 targets: ["yellow"],
-                unlockedPotions: ["purple", "brown", "min_red", "min_blue", "min_yellow"],
+                unlockedPotions: ["orange", "purple", "red", "blue", "green", "min_red", "min_blue", "min_yellow"],
                 lockedPotions: ["yellow", "brown"]
             )
-        case "Orange":
+        case "Coconut":
             return WorkbenchLevelConfig(
-                targets: ["orange"],
-                unlockedPotions: ["yellow", "purple", "purple", "blue", "min_blue", "min_red"],
+                targets: ["brown"],
+                unlockedPotions: ["red", "yellow", "blue", "orange", "purple", "green", "min_red", "min_blue", "min_yellow"],
                 lockedPotions: ["brown"]
             )
         case "Avocado":
@@ -139,11 +141,7 @@ enum WorkbenchLevelRecipe {
                 lockedPotions: ["red", "orange", "green", "brown"]
             )
         default:
-            return WorkbenchLevelConfig(
-                targets: ["red"],
-                unlockedPotions: ["red", "yellow", "blue"],
-                lockedPotions: ["orange", "purple", "green", "brown", "min_red", "min_blue", "min_yellow"]
-            )
+            return levelOnePlaceholder
         }
     }
 
@@ -279,7 +277,7 @@ struct PotionImageView: View {
     let colorName: String
 
     var body: some View {
-        if colorName.hasPrefix("min_") {
+        if colorName.hasPrefix("min_"), bundledUIImage(named: PotionAssetCatalog.imageName(for: colorName)) == nil {
             minusPotionPlaceholder
         } else {
             loadBundledImage(PotionAssetCatalog.imageName(for: colorName))
@@ -333,35 +331,61 @@ struct InteractiveBallView: View {
         potionContent
             .position(x: ball.position.x + potionSize / 2, y: ball.position.y + potionSize / 2)
             .offset(dragOffset)
-            .gesture(
-                DragGesture(coordinateSpace: .named("TableSpace"))
-                    .onChanged { gesture in
-                        dragOffset = gesture.translation
+    }
+
+    @ViewBuilder
+    private var potionContent: some View {
+        let content = PotionImageView(colorName: ball.colorName)
+            .frame(width: potionSize, height: potionSize)
+            .opacity(ball.isUnlocked ? 1.0 : 0.34)
+            .saturation(ball.isUnlocked ? 1.0 : 0.08)
+            .overlay(alignment: .topTrailing) {
+                if !ball.isUnlocked {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 13, weight: .black))
+                        .foregroundStyle(.white)
+                        .padding(7)
+                        .background(Color.black.opacity(0.42), in: Circle())
+                        .offset(x: -4, y: 4)
+                }
+            }
+            .shadow(color: Color.black.opacity(ball.isUnlocked ? 0.24 : 0.12), radius: 8, x: 0, y: 5)
+
+        if ball.isUnlocked {
+            content.gesture(dragGesture)
+        } else {
+            content
+        }
+    }
+
+    private var dragGesture: some Gesture {
+        DragGesture(coordinateSpace: .named("TableSpace"))
+            .onChanged { gesture in
+                dragOffset = gesture.translation
+            }
+            .onEnded { gesture in
+                if let index = allBalls.firstIndex(where: { $0.id == ball.id }) {
+                    let finalPosition = CGPoint(
+                        x: allBalls[index].position.x + gesture.translation.width,
+                        y: allBalls[index].position.y + gesture.translation.height
+                    )
+
+                    allBalls[index].position = finalPosition
+                    dragOffset = .zero
+
+                    if checkTargetDrop(at: finalPosition, currentBall: allBalls[index], currentIndex: index) {
+                        return
                     }
-                    .onEnded { gesture in
-                        if let index = allBalls.firstIndex(where: { $0.id == ball.id }) {
-                            let finalPosition = CGPoint(
-                                x: allBalls[index].position.x + gesture.translation.width,
-                                y: allBalls[index].position.y + gesture.translation.height
-                            )
-                            
-                            allBalls[index].position = finalPosition
-                            dragOffset = .zero
-                            
-                            if checkTargetDrop(at: finalPosition, currentBall: allBalls[index], currentIndex: index) {
-                                return
-                            }
-                            
-                            checkBallMerge(for: allBalls[index], currentIndex: index)
-                        }
-                    }
-            )
+
+                    checkBallMerge(for: allBalls[index], currentIndex: index)
+                }
+            }
     }
     
     // Logika Mendeteksi apakah Bola dilepas di atas Target Potion Box
     private func checkTargetDrop(at dropPoint: CGPoint, currentBall: PotionType, currentIndex: Int) -> Bool {
         // Titik tengah bola saat di-drop
-        let ballCenter = CGPoint(x: dropPoint.x + 35, y: dropPoint.y + 35)
+        let ballCenter = CGPoint(x: dropPoint.x + potionSize / 2, y: dropPoint.y + potionSize / 2)
         
         for i in targets.indices {
             // Periksa apakah titik tengah bola masuk ke dalam area persegi Target Potion Box

@@ -97,6 +97,8 @@ struct GameFlowView: View {
             return "Coconut"
         case 7:
             return "Avocado"
+        case 8, 9, 10:
+            return "Apple"
         default:
             return "Apple"
         }
