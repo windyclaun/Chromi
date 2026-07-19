@@ -16,11 +16,11 @@ struct NewWorkBench: View {
     let onMenu: () -> Void
     let onBack: () -> Void
     
-    @State var potionsList: [BallDataType]
-    @State var targetList: [PotionTargetDataType]
+    @State var potionsList: [PotionType]
+    @State var targetList: [TargetDataType]
     
-    private let initialBalls: [BallDataType]
-    private let initialTargets: [PotionTargetDataType]
+    private let initialBalls: [PotionType]
+    private let initialTargets: [TargetDataType]
     
     @State private var isPauseGame: Bool = false
     @State private var fruitYaw: Float = 0
@@ -32,8 +32,8 @@ struct NewWorkBench: View {
 
     init(
         modelName: String,
-        potionsList: [BallDataType],
-        targetList: [PotionTargetDataType],
+        potionsList: [PotionType],
+        targetList: [TargetDataType],
         
         onLevelCompleted: @escaping () -> Void = {},
         onRestart: @escaping () -> Void,
@@ -124,9 +124,9 @@ struct NewWorkBench: View {
     }
     
     private func resetGameLevel() {
-        self.potionsList = initialBalls.map { BallDataType(colorName: $0.colorName, isUnlocked: $0.isUnlocked, position: .zero) }
+        self.potionsList = initialBalls.map { PotionType(colorName: $0.colorName, isUnlocked: $0.isUnlocked, position: .zero) }
         
-        self.targetList = initialTargets.map { PotionTargetDataType(colorName: $0.colorName, isMatched: false, globalFrame: .zero) }
+        self.targetList = initialTargets.map { TargetDataType(colorName: $0.colorName, isMatched: false, globalFrame: .zero) }
         
         self.isReset = false
     }

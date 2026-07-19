@@ -36,13 +36,13 @@ enum PotionAssetCatalog {
         primaryColorNames + secondaryColorNames + modifierColorNames
     }
 
-    static func potions(for modelName: String) -> [BallDataType] {
+    static func potions(for modelName: String) -> [PotionType] {
         let config = WorkbenchLevelRecipe.config(for: modelName)
         let unlockedSet = Set(config.unlockedPotions)
         let orderedNames = unique(config.unlockedPotions + config.lockedPotions)
 
         return orderedNames.map { colorName in
-            BallDataType(colorName: colorName, isUnlocked: unlockedSet.contains(colorName))
+            PotionType(colorName: colorName, isUnlocked: unlockedSet.contains(colorName))
         }
     }
 
@@ -108,28 +108,28 @@ enum WorkbenchLevelRecipe {
                 unlockedPotions: ["red", "yellow", "blue"],
                 lockedPotions: ["orange", "purple", "green", "brown", "min_red", "min_blue", "min_yellow"]
             )
-        case "Orange":
+        case "Coconut":
             return WorkbenchLevelConfig(
-                targets: ["orange", "green"],
-                unlockedPotions: ["red", "yellow", "blue", "green"],
+                targets: ["brown"],
+                unlockedPotions: ["red", "yellow", "blue"],
                 lockedPotions: ["purple", "orange", "brown", "min_red", "min_blue", "min_yellow"]
             )
         case "Eggplant":
             return WorkbenchLevelConfig(
                 targets: ["purple", "green"],
-                unlockedPotions: ["red", "yellow", "blue", "green", "orange"],
+                unlockedPotions: ["red", "yellow", "blue", "brown", "min_yellow"],
                 lockedPotions: ["purple", "brown", "min_red", "min_blue", "min_yellow"]
             )
         case "Lemon1":
             return WorkbenchLevelConfig(
                 targets: ["yellow"],
-                unlockedPotions: ["orange", "purple", "red", "blue", "green", "min_red", "min_blue", "min_yellow"],
+                unlockedPotions: ["purple", "brown", "min_red", "min_blue", "min_yellow"],
                 lockedPotions: ["yellow", "brown"]
             )
-        case "Coconut":
+        case "Orange":
             return WorkbenchLevelConfig(
-                targets: ["brown"],
-                unlockedPotions: ["red", "yellow", "blue", "orange", "purple", "green", "min_red", "min_blue", "min_yellow"],
+                targets: ["orange"],
+                unlockedPotions: ["yellow", "purple", "purple", "blue", "min_blue", "min_red"],
                 lockedPotions: ["brown"]
             )
         case "Avocado":
@@ -147,8 +147,8 @@ enum WorkbenchLevelRecipe {
         }
     }
 
-    static func targets(for modelName: String) -> [PotionTargetDataType] {
-        config(for: modelName).targets.map { PotionTargetDataType(colorName: $0) }
+    static func targets(for modelName: String) -> [TargetDataType] {
+        config(for: modelName).targets.map { TargetDataType(colorName: $0) }
     }
 }
 
@@ -417,7 +417,7 @@ struct InteractiveBallView: View {
             return
         }
 
-        allBalls.append(BallDataType(colorName: colorName, isUnlocked: true, position: resultPosition))
+        allBalls.append(PotionType(colorName: colorName, isUnlocked: true, position: resultPosition))
     }
 
     private func mixedColor(_ colorA: String, _ colorB: String) -> String? {
