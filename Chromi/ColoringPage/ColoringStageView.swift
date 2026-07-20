@@ -30,18 +30,22 @@ struct ColoringStageView: View {
                     .offset(y: isBubbleFloating ? -8 : 0)
                     .animation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true), value: isBubbleFloating)
 
-                RealityFruitView(modelName: modelName, yaw: fruitYaw, pitch: fruitPitch)
-                    .id(modelName)
-                    .frame(
-                        width: min(geometrySize.width * (isLandscape ? 0.38 : 0.72), 500),
-                        height: min(height * 0.72, 470)
-                    )
-                    .shadow(color: Color.black.opacity(0.22), radius: 20, x: 0, y: 18)
-                    .contentShape(Rectangle())
-                    .gesture(fruitRotationGesture)
-                    .onTapGesture {
-                        onOpenWorkbench()
-                    }
+                VStack(spacing: 10) {
+                    fruitTag
+
+                    RealityFruitView(modelName: modelName, yaw: fruitYaw, pitch: fruitPitch)
+                        .id(modelName)
+                        .frame(
+                            width: min(geometrySize.width * (isLandscape ? 0.38 : 0.72), 500),
+                            height: min(height * 0.72, 470)
+                        )
+                        .shadow(color: Color.black.opacity(0.22), radius: 20, x: 0, y: 18)
+                        .contentShape(Rectangle())
+                        .gesture(fruitRotationGesture)
+                        .onTapGesture {
+                            onOpenWorkbench()
+                        }
+                }
 
                 HStack(spacing: 7) {
                     Image(systemName: "rotate.3d")
@@ -114,6 +118,26 @@ struct ColoringStageView: View {
         )
         .shadow(color: Color.yellow.opacity(0.42), radius: 16, x: 0, y: 0)
         .shadow(color: Color.black.opacity(0.18), radius: 10, x: 0, y: 6)
+    }
+
+    private var fruitTag: some View {
+        Text(displayFruitName(for: modelName))
+            .font(.system(size: 15, weight: .black, design: .rounded))
+            .foregroundStyle(Color(red: 0.25, green: 0.08, blue: 0.58))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .background(Color.white.opacity(0.92), in: Capsule())
+            .overlay(Capsule().stroke(Color.purple.opacity(0.24), lineWidth: 2))
+            .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
+    }
+
+    private func displayFruitName(for modelName: String) -> String {
+        switch modelName {
+        case "Lemon1":
+            return "Lemon"
+        default:
+            return modelName
+        }
     }
 
     private func mascotGuide(width: CGFloat) -> some View {

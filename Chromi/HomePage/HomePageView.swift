@@ -9,6 +9,7 @@ import SwiftUI
 
 struct HomePageView: View {
     @State private var showGameFlow = false
+    @State private var isMascotFloating = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -42,6 +43,7 @@ struct HomePageView: View {
         .ignoresSafeArea()
         .onAppear {
             BackgroundMusicPlayer.shared.playLoop(named: "HomePageSound")
+            isMascotFloating = true
         }
         .fullScreenCover(isPresented: $showGameFlow, onDismiss: {
             BackgroundMusicPlayer.shared.playLoop(named: "HomePageSound")
@@ -65,6 +67,8 @@ struct HomePageView: View {
                     .scaledToFit()
                     .frame(width: min(size.width * 0.5, 450))
                     .shadow(color: .black.opacity(0.35), radius: 22, x: 0, y: 14)
+                    .offset(y: isMascotFloating ? -6 : 6)
+                    .animation(.easeInOut(duration: 1.9).repeatForever(autoreverses: true), value: isMascotFloating)
             }
 
             Spacer(minLength: 6)
@@ -111,6 +115,8 @@ struct HomePageView: View {
                     .scaledToFit()
                     .frame(width: min(size.width * 0.68, 350))
                     .shadow(color: .black.opacity(0.35), radius: 22, x: 0, y: 14)
+                    .offset(y: isMascotFloating ? -6 : 6)
+                    .animation(.easeInOut(duration: 1.9).repeatForever(autoreverses: true), value: isMascotFloating)
             }
 
             startButton(width: min(size.width * 0.64, 330))

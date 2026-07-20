@@ -58,18 +58,25 @@ struct NewWorkBench: View {
     var body: some View {
         ZStack {
             WorkBenchBackground()
+            VStack(spacing: 8) {
+                fruitTag
+
+                FruitModelView(
+                    modelName: modelName,
+                    fruitYaw: $fruitYaw,
+                    fruitPitch: $fruitPitch,
+                    lastFruitDrag: $lastFruitDrag,
+                    isFruitFloating: $isFruitFloating
+                )
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .zIndex(2)
             WorkBenchOnly(
                 balls: $potionsList,
                 targets: $targetList,
                 isLayoutInitialized: $isReset
             )
-            FruitModelView(
-                modelName: modelName,
-                fruitYaw: $fruitYaw,
-                fruitPitch: $fruitPitch,
-                lastFruitDrag: $lastFruitDrag,
-                isFruitFloating: $isFruitFloating
-            )
+            .zIndex(1)
             
             WorkBenchTopButton(onBack: onBack, onRestart: resetGameLevel, isPauseGame: $isPauseGame)
                 .zIndex(10)
@@ -129,6 +136,26 @@ struct NewWorkBench: View {
         self.targetList = initialTargets.map { TargetDataType(colorName: $0.colorName, isMatched: false, globalFrame: .zero) }
         
         self.isReset = false
+    }
+
+    private var fruitTag: some View {
+        Text(displayFruitName(for: modelName))
+            .font(.system(size: 15, weight: .black, design: .rounded))
+            .foregroundStyle(Color(red: 0.25, green: 0.08, blue: 0.58))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .background(Color.white.opacity(0.92), in: Capsule())
+            .overlay(Capsule().stroke(Color.purple.opacity(0.24), lineWidth: 2))
+            .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
+    }
+
+    private func displayFruitName(for modelName: String) -> String {
+        switch modelName {
+        case "Lemon1":
+            return "Lemon"
+        default:
+            return modelName
+        }
     }
 
 }

@@ -12,6 +12,7 @@ struct LandingPage: View {
 
     @State private var currentPage = 0
     @State private var pageTransitionDirection = 1
+    @State private var isMascotFloating = false
 
     private let pages: [IntroPage] = [
         IntroPage(
@@ -85,6 +86,9 @@ struct LandingPage: View {
         }
         .onDisappear {
             SoundEffectPlayer.shared.stopIntro()
+        }
+        .onAppear {
+            isMascotFloating = true
         }
     }
 
@@ -166,6 +170,8 @@ struct LandingPage: View {
                 .scaledToFit()
                 .frame(width: width)
                 .shadow(color: .black.opacity(0.34), radius: 20, x: 0, y: 13)
+                .offset(y: isMascotFloating ? -6 : 6)
+                .animation(.easeInOut(duration: 1.9).repeatForever(autoreverses: true), value: isMascotFloating)
         }
     }
 
