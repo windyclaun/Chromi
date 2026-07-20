@@ -40,6 +40,21 @@ final class SoundEffectPlayer {
 
     func playColor(named colorName: String) {
         let normalizedColorName = colorName.replacingOccurrences(of: "min_", with: "")
-        play(named: normalizedColorName, fileExtension: "m4a", subdirectory: "Colors")
+        playFirstAvailable(
+            named: normalizedColorName,
+            fileExtension: "m4a",
+            subdirectories: ["Colors", "AssetsSound/Colors", "Audio/AssetsSound/Colors", nil]
+        )
+    }
+
+    private func playFirstAvailable(named resourceName: String, fileExtension: String, subdirectories: [String?]) {
+        for subdirectory in subdirectories {
+            if Bundle.main.url(forResource: resourceName, withExtension: fileExtension, subdirectory: subdirectory) != nil {
+                play(named: resourceName, fileExtension: fileExtension, subdirectory: subdirectory)
+                return
+            }
+        }
+
+        print("Sound effect not found: \(resourceName).\(fileExtension)")
     }
 }
