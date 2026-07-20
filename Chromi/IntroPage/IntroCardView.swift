@@ -157,13 +157,14 @@ struct IntroCardView: View {
 
     private func nextButton(width: CGFloat) -> some View {
         introActionButton(title: "Next", systemImage: "arrow.right.circle.fill", width: width) {
-            SoundEffectPlayer.shared.play(named: "ClickNextIntro", fileExtension: "mp3")
+            SoundEffectPlayer.shared.play(named: "ClickNextIntro", fileExtension: "m4a")
             goToNextPage()
         }
     }
 
     private func letsPlayButton(width: CGFloat) -> some View {
         introActionButton(title: "Let's Play!", systemImage: "gamecontroller.fill", width: width) {
+            SoundEffectPlayer.shared.stopIntro()
             SoundEffectPlayer.shared.play(named: "ClickStartSound", fileExtension: "wav")
             onLetsPlay()
         }

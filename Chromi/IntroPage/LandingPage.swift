@@ -77,6 +77,15 @@ struct LandingPage: View {
             .ignoresSafeArea()
         }
         .ignoresSafeArea()
+        .onAppear {
+            playIntroSound(for: currentPage)
+        }
+        .onChange(of: currentPage) { _, newPage in
+            playIntroSound(for: newPage)
+        }
+        .onDisappear {
+            SoundEffectPlayer.shared.stopIntro()
+        }
     }
 
     // MARK: - Layouts
@@ -124,7 +133,7 @@ struct LandingPage: View {
     // MARK: - Components
     private var skipButton: some View {
         Button("Skip") {
-            SoundEffectPlayer.shared.play(named: "ClickNextIntro", fileExtension: "mp3")
+            SoundEffectPlayer.shared.play(named: "ClickNextIntro", fileExtension: "m4a")
             pageTransitionDirection = 1
             withAnimation(.spring(response: 0.52, dampingFraction: 0.9)) {
                 currentPage = pages.count - 1
@@ -158,6 +167,10 @@ struct LandingPage: View {
                 .frame(width: width)
                 .shadow(color: .black.opacity(0.34), radius: 20, x: 0, y: 13)
         }
+    }
+
+    private func playIntroSound(for page: Int) {
+        SoundEffectPlayer.shared.playIntro(pageIndex: page)
     }
 
     private func bundledImage(_ name: String) -> Image {

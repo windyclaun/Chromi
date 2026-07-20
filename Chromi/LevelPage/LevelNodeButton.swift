@@ -16,6 +16,7 @@ struct LevelNodeButton: View {
     var body: some View {
         Button {
             if level.isUnlocked {
+                SoundEffectPlayer.shared.play(named: "clickLevel", fileExtension: "wav")
                 onSelect(level)
             }
         } label: {

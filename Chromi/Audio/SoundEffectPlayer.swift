@@ -13,6 +13,7 @@ final class SoundEffectPlayer {
     static let shared = SoundEffectPlayer()
 
     private var activePlayers: [AVAudioPlayer] = []
+    private var introPlayer: AVAudioPlayer?
 
     private init() {}
 
@@ -45,6 +46,47 @@ final class SoundEffectPlayer {
             fileExtension: "m4a",
             subdirectories: ["Colors", "AssetsSound/Colors", "Audio/AssetsSound/Colors", nil]
         )
+    }
+
+    func playIntro(pageIndex: Int) {
+        playExclusiveIntro(
+            named: "intro\(pageIndex + 1)",
+            fileExtension: "m4a",
+            subdirectories: ["Intro", "AssetsSound/Intro", "Audio/AssetsSound/Intro", nil]
+        )
+    }
+
+    func stopIntro() {
+        introPlayer?.stop()
+        introPlayer = nil
+    }
+
+    private func playExclusiveIntro(named resourceName: String, fileExtension: String, subdirectories: [String?]) {
+        for subdirectory in subdirectories {
+            if let url = Bundle.main.url(forResource: resourceName, withExtension: fileExtension, subdirectory: subdirectory) {
+                playIntro(from: url)
+                return
+            }
+        }
+
+        print("Sound effect not found: \(resourceName).\(fileExtension)")
+    }
+
+    private func playIntro(from url: URL) {
+        stopIntro()
+
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default, options: [.mixWithOthers])
+            try AVAudioSession.sharedInstance().setActive(true)
+
+            let player = try AVAudioPlayer(contentsOf: url)
+            player.volume = 0.95
+            player.prepareToPlay()
+            player.play()
+            introPlayer = player
+        } catch {
+            print("Failed to play intro sound: \(error.localizedDescription)")
+        }
     }
 
     private func playFirstAvailable(named resourceName: String, fileExtension: String, subdirectories: [String?]) {
