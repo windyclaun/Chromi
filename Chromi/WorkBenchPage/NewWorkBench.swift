@@ -30,7 +30,7 @@ struct NewWorkBench: View {
     @State private var isFruitFloating = false
     @State private var showSuccessPage = false
     @State private var isReset = false
-    @State private var isFruitColored = false
+    @State private var fruitColorProgress: CGFloat = 0
 
     init(
         modelName: String,
@@ -69,7 +69,7 @@ struct NewWorkBench: View {
                     fruitPitch: $fruitPitch,
                     lastFruitDrag: $lastFruitDrag,
                     isFruitFloating: $isFruitFloating,
-                    isFruitColored: isFruitColored
+                    fruitColorProgress: fruitColorProgress
                 )
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -79,6 +79,7 @@ struct NewWorkBench: View {
                 targets: $targetList,
                 isLayoutInitialized: $isReset,
                 isWandUnlocked: isWandUnlocked,
+                onWandProgress: updateWandProgress,
                 onWandCast: castWandToFruit
             )
             .zIndex(1)
@@ -91,7 +92,7 @@ struct NewWorkBench: View {
         }
         .onChange(of: targetList.map(\.isMatched)) { _, matchedStates in
             guard !matchedStates.allSatisfy({ $0 }) else { return }
-            isFruitColored = false
+            fruitColorProgress = 0
         }
         .fullScreenCover(isPresented: $showSuccessPage) {
             SuccessPageView(
@@ -141,7 +142,7 @@ struct NewWorkBench: View {
         self.targetList = initialTargets.map { TargetDataType(colorName: $0.colorName, isMatched: false, globalFrame: .zero) }
         
         self.isReset = false
-        self.isFruitColored = false
+        self.fruitColorProgress = 0
     }
 
     private var isWandUnlocked: Bool {
@@ -152,11 +153,19 @@ struct NewWorkBench: View {
         guard isWandUnlocked else { return }
 
         withAnimation(.easeInOut(duration: 0.32)) {
-            isFruitColored = true
+            fruitColorProgress = 1
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
             showSuccessPage = true
+        }
+    }
+
+    private func updateWandProgress(_ progress: CGFloat) {
+        guard isWandUnlocked else { return }
+
+        withAnimation(.linear(duration: 0.08)) {
+            fruitColorProgress = progress
         }
     }
 
@@ -285,7 +294,7 @@ struct FruitModelView: View {
     @Binding var fruitPitch: Float
     @Binding var lastFruitDrag: CGSize
     @Binding var isFruitFloating: Bool
-    let isFruitColored: Bool
+    let fruitColorProgress: CGFloat
     
     var body: some View {
         GeometryReader { geometry in
@@ -294,19 +303,26 @@ struct FruitModelView: View {
             let topPadding = fruitHeightSize * 0.08
             
             VStack(spacing: 0) {
-                RealityFruitView(modelName: modelName, yaw: fruitYaw, pitch: fruitPitch, isMonochrome: !isFruitColored)
-                    .id("\(modelName)-\(isFruitColored)")
-                    .frame(width: 500, height: fruitHeightSize)
-                    .shadow(color: Color.black.opacity(0.24), radius: 18, x: 0, y: 16)
-                    .contentShape(Rectangle())
-                    .overlay {
-                        TwoFingerFruitRotationView(
-                            fruitYaw: $fruitYaw,
-                            fruitPitch: $fruitPitch,
-                            lastFruitDrag: $lastFruitDrag
-                        )
-                    }
-                    .padding(.top, topPadding)
+                ZStack {
+                    RealityFruitView(modelName: modelName, yaw: fruitYaw, pitch: fruitPitch, isMonochrome: true)
+                        .id("\(modelName)-gray")
+                        .opacity(1 - min(max(fruitColorProgress, 0), 1))
+
+                    RealityFruitView(modelName: modelName, yaw: fruitYaw, pitch: fruitPitch, isMonochrome: false)
+                        .id("\(modelName)-color")
+                        .opacity(min(max(fruitColorProgress, 0), 1))
+                }
+                .frame(width: 500, height: fruitHeightSize)
+                .shadow(color: Color.black.opacity(0.24), radius: 18, x: 0, y: 16)
+                .contentShape(Rectangle())
+                .overlay {
+                    TwoFingerFruitRotationView(
+                        fruitYaw: $fruitYaw,
+                        fruitPitch: $fruitPitch,
+                        lastFruitDrag: $lastFruitDrag
+                    )
+                }
+                .padding(.top, topPadding)
                 
                 HStack(spacing: 7) {
                     Image(systemName: "rotate.3d")

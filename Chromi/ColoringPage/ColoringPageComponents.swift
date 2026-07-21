@@ -52,6 +52,11 @@ func bundledUIImage(named name: String) -> UIImage? {
         return image
     }
 
+    if let url = Bundle.main.url(forResource: resourceName, withExtension: fileExtension),
+       let image = UIImage(contentsOfFile: url.path) {
+        return image
+    }
+
     if let resourceURL = Bundle.main.resourceURL {
         let candidateURL = resourceURL.appendingPathComponent(normalizedName)
         if let image = UIImage(contentsOfFile: candidateURL.path) {
@@ -60,6 +65,11 @@ func bundledUIImage(named name: String) -> UIImage? {
 
         let assetsCandidateURL = resourceURL.appendingPathComponent("Assets").appendingPathComponent(normalizedName)
         if let image = UIImage(contentsOfFile: assetsCandidateURL.path) {
+            return image
+        }
+
+        let flatCandidateURL = resourceURL.appendingPathComponent(fileName as String)
+        if let image = UIImage(contentsOfFile: flatCandidateURL.path) {
             return image
         }
     }
@@ -208,4 +218,3 @@ struct PauseOverlayView: View {
         .buttonStyle(LevelButtonStyle())
     }
 }
-

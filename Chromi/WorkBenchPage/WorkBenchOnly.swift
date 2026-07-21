@@ -159,6 +159,7 @@ struct WorkBenchOnly: View {
     
     @Binding var isLayoutInitialized: Bool
     let isWandUnlocked: Bool
+    let onWandProgress: (CGFloat) -> Void
     let onWandCast: () -> Void
 
     var body: some View {
@@ -174,6 +175,7 @@ struct WorkBenchOnly: View {
                 targets: $targets,
                 isLayoutInitialized: $isLayoutInitialized,
                 isWandUnlocked: isWandUnlocked,
+                onWandProgress: onWandProgress,
                 onWandCast: onWandCast
             )
         }
@@ -187,6 +189,7 @@ struct WorkBench: View {
     
     @Binding var isLayoutInitialized: Bool
     let isWandUnlocked: Bool
+    let onWandProgress: (CGFloat) -> Void
     let onWandCast: () -> Void
 
     var body: some View {
@@ -200,6 +203,12 @@ struct WorkBench: View {
 
             GeometryReader { geometry in
                 let tableBounds = CGRect(origin: .zero, size: geometry.size)
+                let potionBounds = CGRect(
+                    x: tableBounds.minX,
+                    y: tableBounds.minY,
+                    width: max(WorkBenchPotionLayout.shelfWidth, tableBounds.width - 220),
+                    height: tableBounds.height
+                )
 
                 ZStack(alignment: .bottomLeading) {
                     HStack(alignment: .center, spacing: 18) {
@@ -215,7 +224,11 @@ struct WorkBench: View {
                         }
                         .frame(maxWidth: 360)
 
-                        WandToolView(isUnlocked: isWandUnlocked, onCast: onWandCast)
+                        WandToolView(
+                            isUnlocked: isWandUnlocked,
+                            onProgress: onWandProgress,
+                            onCast: onWandCast
+                        )
                             .frame(width: 180, height: 230)
 
                         Spacer(minLength: 24)
@@ -260,7 +273,7 @@ struct WorkBench: View {
                                 ball: ball,
                                 allBalls: $balls,
                                 targets: $targets,
-                                tableBounds: tableBounds
+                                tableBounds: potionBounds
                             )
                         }
                     }
@@ -304,6 +317,7 @@ struct TargetPotionBox: View {
 
 struct WandToolView: View {
     let isUnlocked: Bool
+    let onProgress: (CGFloat) -> Void
     let onCast: () -> Void
 
     @State private var dragOffset: CGSize = .zero
@@ -342,12 +356,14 @@ struct WandToolView: View {
     private var wandGesture: some Gesture {
         DragGesture(minimumDistance: 6)
             .onChanged { value in
-                let limitedY = min(max(value.translation.height, -120), 22)
-                dragOffset = CGSize(width: min(max(value.translation.width, -34), 18), height: limitedY)
-                isCasting = limitedY < -52
+                let limitedY = min(max(value.translation.height, -330), 22)
+                let progress = min(max(abs(min(limitedY, 0)) / 300, 0), 1)
+                dragOffset = CGSize(width: min(max(value.translation.width, -80), 18), height: limitedY)
+                isCasting = progress > 0.22
+                onProgress(progress)
             }
             .onEnded { value in
-                let didCast = value.translation.height < -72
+                let didCast = value.translation.height < -250
                 withAnimation(.spring(response: 0.34, dampingFraction: 0.72)) {
                     dragOffset = .zero
                     isCasting = false
@@ -355,7 +371,10 @@ struct WandToolView: View {
 
                 if didCast {
                     SoundEffectPlayer.shared.play(named: "mixkit-fairy-magic-sparkle-871", fileExtension: "wav")
+                    onProgress(1)
                     onCast()
+                } else {
+                    onProgress(0)
                 }
             }
     }
@@ -384,16 +403,25 @@ struct PotionImageView: View {
     let colorName: String
 
     var body: some View {
-        if colorName.hasPrefix("min_"), bundledUIImage(named: PotionAssetCatalog.imageName(for: colorName)) == nil {
-            minusPotionPlaceholder
-        } else {
-            loadBundledImage(PotionAssetCatalog.imageName(for: colorName))
+        if let imageName = resolvedPotionImageName {
+            loadBundledImage(imageName)
                 .resizable()
                 .scaledToFit()
+        } else {
+            potionFallback
         }
     }
 
-    private var minusPotionPlaceholder: some View {
+    private var resolvedPotionImageName: String? {
+        [
+            PotionAssetCatalog.imageName(for: colorName),
+            "\(colorName).PNG",
+            "Assets/ColorPotion/\(colorName).PNG",
+            "potions/\(colorName).png"
+        ].first { bundledUIImage(named: $0) != nil }
+    }
+
+    private var potionFallback: some View {
         let tint = PotionAssetCatalog.tint(for: colorName)
 
         return ZStack {
@@ -628,6 +656,7 @@ struct WorkBenchOnly_PreviewContainer: View {
             targets: $targetList,
             isLayoutInitialized: $isLayoutInitialized,
             isWandUnlocked: true,
+            onWandProgress: { _ in },
             onWandCast: {}
         )
     }
