@@ -19,6 +19,14 @@ struct GameFlowView: View {
     @State private var selectedLevel: LevelNode?
     let onDismiss: () -> Void
 
+    init(onDismiss: @escaping () -> Void) {
+        #if DEBUG
+        UserDefaults.standard.set(1, forKey: "chromi.highestUnlockedLevelID")
+        #endif
+
+        self.onDismiss = onDismiss
+    }
+
     var body: some View {
         ZStack {
             ColoringPage(
@@ -125,4 +133,5 @@ struct GameFlowView: View {
         let nextUnlockedLevel = min(currentLevel.id + 1, LevelNode.maxLevelID)
         highestUnlockedLevelID = max(highestUnlockedLevelID, nextUnlockedLevel)
     }
+
 }
