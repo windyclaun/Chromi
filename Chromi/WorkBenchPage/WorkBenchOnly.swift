@@ -185,7 +185,9 @@ struct WorkBench: View {
                 .clipped()
                 .ignoresSafeArea()
 
-            GeometryReader { _ in
+            GeometryReader { geometry in
+                let tableBounds = CGRect(origin: .zero, size: geometry.size)
+
                 ZStack(alignment: .bottomLeading) {
                     HStack(spacing: 0) {
                         Spacer()
@@ -232,7 +234,12 @@ struct WorkBench: View {
                         .frame(maxHeight: .infinity)
                     } else {
                         ForEach(balls) { ball in
-                            InteractiveBallView(ball: ball, allBalls: $balls, targets: $targets)
+                            InteractiveBallView(
+                                ball: ball,
+                                allBalls: $balls,
+                                targets: $targets,
+                                tableBounds: tableBounds
+                            )
                         }
                     }
                 }
@@ -322,6 +329,7 @@ struct InteractiveBallView: View {
     var ball: PotionType
     @Binding var allBalls: [PotionType]
     @Binding var targets: [TargetDataType]
+    let tableBounds: CGRect
     
     @State private var dragOffset: CGSize = .zero
 
@@ -361,14 +369,24 @@ struct InteractiveBallView: View {
     private var dragGesture: some Gesture {
         DragGesture(coordinateSpace: .named("TableSpace"))
             .onChanged { gesture in
-                dragOffset = gesture.translation
+                let proposedPosition = CGPoint(
+                    x: ball.position.x + gesture.translation.width,
+                    y: ball.position.y + gesture.translation.height
+                )
+                let clampedPosition = clampedPotionPosition(proposedPosition)
+
+                dragOffset = CGSize(
+                    width: clampedPosition.x - ball.position.x,
+                    height: clampedPosition.y - ball.position.y
+                )
             }
             .onEnded { gesture in
                 if let index = allBalls.firstIndex(where: { $0.id == ball.id }) {
-                    let finalPosition = CGPoint(
+                    let proposedPosition = CGPoint(
                         x: allBalls[index].position.x + gesture.translation.width,
                         y: allBalls[index].position.y + gesture.translation.height
                     )
+                    let finalPosition = clampedPotionPosition(proposedPosition)
 
                     allBalls[index].position = finalPosition
                     dragOffset = .zero
@@ -380,6 +398,13 @@ struct InteractiveBallView: View {
                     checkBallMerge(for: allBalls[index], currentIndex: index)
                 }
             }
+    }
+
+    private func clampedPotionPosition(_ position: CGPoint) -> CGPoint {
+        CGPoint(
+            x: min(max(position.x, tableBounds.minX), tableBounds.maxX - potionSize),
+            y: min(max(position.y, tableBounds.minY), tableBounds.maxY - potionSize)
+        )
     }
     
     // Logika Mendeteksi apakah Bola dilepas di atas Target Potion Box
