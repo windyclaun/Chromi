@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct NewWorkBench: View {
     let modelName: String
@@ -29,6 +30,7 @@ struct NewWorkBench: View {
     @State private var isFruitFloating = false
     @State private var showSuccessPage = false
     @State private var isReset = false
+    @State private var isFruitColored = false
 
     init(
         modelName: String,
@@ -66,7 +68,8 @@ struct NewWorkBench: View {
                     fruitYaw: $fruitYaw,
                     fruitPitch: $fruitPitch,
                     lastFruitDrag: $lastFruitDrag,
-                    isFruitFloating: $isFruitFloating
+                    isFruitFloating: $isFruitFloating,
+                    isFruitColored: isFruitColored
                 )
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -74,7 +77,9 @@ struct NewWorkBench: View {
             WorkBenchOnly(
                 balls: $potionsList,
                 targets: $targetList,
-                isLayoutInitialized: $isReset
+                isLayoutInitialized: $isReset,
+                isWandUnlocked: isWandUnlocked,
+                onWandCast: castWandToFruit
             )
             .zIndex(1)
             
@@ -85,8 +90,8 @@ struct NewWorkBench: View {
             isFruitFloating = true
         }
         .onChange(of: targetList.map(\.isMatched)) { _, matchedStates in
-            guard !matchedStates.isEmpty, matchedStates.allSatisfy({ $0 }) else { return }
-            showSuccessPage = true
+            guard !matchedStates.allSatisfy({ $0 }) else { return }
+            isFruitColored = false
         }
         .fullScreenCover(isPresented: $showSuccessPage) {
             SuccessPageView(
@@ -136,6 +141,23 @@ struct NewWorkBench: View {
         self.targetList = initialTargets.map { TargetDataType(colorName: $0.colorName, isMatched: false, globalFrame: .zero) }
         
         self.isReset = false
+        self.isFruitColored = false
+    }
+
+    private var isWandUnlocked: Bool {
+        !targetList.isEmpty && targetList.allSatisfy(\.isMatched)
+    }
+
+    private func castWandToFruit() {
+        guard isWandUnlocked else { return }
+
+        withAnimation(.easeInOut(duration: 0.32)) {
+            isFruitColored = true
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
+            showSuccessPage = true
+        }
     }
 
     private var fruitTag: some View {
@@ -263,6 +285,7 @@ struct FruitModelView: View {
     @Binding var fruitPitch: Float
     @Binding var lastFruitDrag: CGSize
     @Binding var isFruitFloating: Bool
+    let isFruitColored: Bool
     
     var body: some View {
         GeometryReader { geometry in
@@ -271,12 +294,18 @@ struct FruitModelView: View {
             let topPadding = fruitHeightSize * 0.08
             
             VStack(spacing: 0) {
-                RealityFruitView(modelName: modelName, yaw: fruitYaw, pitch: fruitPitch)
-                    .id(modelName)
+                RealityFruitView(modelName: modelName, yaw: fruitYaw, pitch: fruitPitch, isMonochrome: !isFruitColored)
+                    .id("\(modelName)-\(isFruitColored)")
                     .frame(width: 500, height: fruitHeightSize)
                     .shadow(color: Color.black.opacity(0.24), radius: 18, x: 0, y: 16)
                     .contentShape(Rectangle())
-                    .gesture(fruitRotationGesture())
+                    .overlay {
+                        TwoFingerFruitRotationView(
+                            fruitYaw: $fruitYaw,
+                            fruitPitch: $fruitPitch,
+                            lastFruitDrag: $lastFruitDrag
+                        )
+                    }
                     .padding(.top, topPadding)
                 
                 HStack(spacing: 7) {
@@ -303,18 +332,57 @@ struct FruitModelView: View {
 
     }
     
-    private func fruitRotationGesture() -> some Gesture {
-        DragGesture(minimumDistance: 4)
-            .onChanged { value in
-                let deltaX = value.translation.width - lastFruitDrag.width
-                let deltaY = value.translation.height - lastFruitDrag.height
-                fruitYaw += Float(deltaX) * 0.01
-                fruitPitch += Float(deltaY) * 0.01
-                lastFruitDrag = value.translation
+}
+
+struct TwoFingerFruitRotationView: UIViewRepresentable {
+    @Binding var fruitYaw: Float
+    @Binding var fruitPitch: Float
+    @Binding var lastFruitDrag: CGSize
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(fruitYaw: $fruitYaw, fruitPitch: $fruitPitch, lastFruitDrag: $lastFruitDrag)
+    }
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView(frame: .zero)
+        view.backgroundColor = .clear
+
+        let panGesture = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handlePan(_:)))
+        panGesture.minimumNumberOfTouches = 2
+        panGesture.maximumNumberOfTouches = 2
+        view.addGestureRecognizer(panGesture)
+
+        return view
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {}
+
+    final class Coordinator: NSObject {
+        private var fruitYaw: Binding<Float>
+        private var fruitPitch: Binding<Float>
+        private var lastFruitDrag: Binding<CGSize>
+
+        init(fruitYaw: Binding<Float>, fruitPitch: Binding<Float>, lastFruitDrag: Binding<CGSize>) {
+            self.fruitYaw = fruitYaw
+            self.fruitPitch = fruitPitch
+            self.lastFruitDrag = lastFruitDrag
+        }
+
+        @objc func handlePan(_ recognizer: UIPanGestureRecognizer) {
+            let translation = recognizer.translation(in: recognizer.view)
+            let currentDrag = CGSize(width: translation.x, height: translation.y)
+
+            switch recognizer.state {
+            case .began, .changed:
+                let deltaX = currentDrag.width - lastFruitDrag.wrappedValue.width
+                let deltaY = currentDrag.height - lastFruitDrag.wrappedValue.height
+                fruitYaw.wrappedValue += Float(deltaX) * 0.01
+                fruitPitch.wrappedValue += Float(deltaY) * 0.01
+                lastFruitDrag.wrappedValue = currentDrag
+            default:
+                lastFruitDrag.wrappedValue = .zero
             }
-            .onEnded { _ in
-                lastFruitDrag = .zero
-            }
+        }
     }
 }
 
@@ -331,13 +399,14 @@ struct Test_PreviewContainer: View {
     ]
     
     var body: some View {
-        NewWorkBench(modelName: "Avocado",
-                     potionsList: potionsList,
-                     targetList: targetList,
-                     onRestart: {},
-                     onNextLevel: {},
-                     onMenu: {},
-                     onBack: {}
+        NewWorkBench(
+            modelName: "Avocado",
+            potionsList: potionsList,
+            targetList: targetList,
+            onRestart: {},
+            onNextLevel: {},
+            onMenu: {},
+            onBack: {}
         )
     }
 }

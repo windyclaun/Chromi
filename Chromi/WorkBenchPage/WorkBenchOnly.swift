@@ -30,7 +30,7 @@ struct WorkbenchLevelConfig {
 enum PotionAssetCatalog {
     static let primaryColorNames = ["red", "yellow", "blue"]
     static let secondaryColorNames = ["orange", "purple", "green", "brown"]
-    static let modifierColorNames = ["min_red", "min_blue", "min_yellow"]
+    static let modifierColorNames = ["min_red", "min_blue", "min_yellow", "min_green", "min_orange", "min_purple"]
 
     static var allColorNames: [String] {
         primaryColorNames + secondaryColorNames + modifierColorNames
@@ -47,7 +47,7 @@ enum PotionAssetCatalog {
     }
 
     static func imageName(for colorName: String) -> String {
-        "potions/\(colorName).png"
+        "ColorPotion/\(colorName).PNG"
     }
 
     static func displayName(for colorName: String) -> String {
@@ -62,6 +62,9 @@ enum PotionAssetCatalog {
         case "min_red": return "-Red"
         case "min_blue": return "-Blue"
         case "min_yellow": return "-Yellow"
+        case "min_green": return "-Green"
+        case "min_orange": return "-Orange"
+        case "min_purple": return "-Purple"
         default: return colorName
         }
     }
@@ -71,9 +74,9 @@ enum PotionAssetCatalog {
         case "red", "min_red": return Color(red: 0.96, green: 0.18, blue: 0.26)
         case "yellow", "min_yellow": return Color(red: 1.0, green: 0.82, blue: 0.12)
         case "blue", "min_blue": return Color(red: 0.22, green: 0.48, blue: 1.0)
-        case "orange": return Color(red: 1.0, green: 0.48, blue: 0.08)
-        case "purple": return Color(red: 0.62, green: 0.28, blue: 0.92)
-        case "green": return Color(red: 0.18, green: 0.72, blue: 0.32)
+        case "orange", "min_orange": return Color(red: 1.0, green: 0.48, blue: 0.08)
+        case "purple", "min_purple": return Color(red: 0.62, green: 0.28, blue: 0.92)
+        case "green", "min_green": return Color(red: 0.18, green: 0.72, blue: 0.32)
         case "brown": return Color(red: 0.44, green: 0.24, blue: 0.1)
         default: return .gray
         }
@@ -155,6 +158,8 @@ struct WorkBenchOnly: View {
     @Binding var targets: [TargetDataType]
     
     @Binding var isLayoutInitialized: Bool
+    let isWandUnlocked: Bool
+    let onWandCast: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -164,7 +169,13 @@ struct WorkBenchOnly: View {
                 .scaledToFit()
                 .frame(maxWidth: .infinity)
                 .clipped()
-            WorkBench(balls: $balls, targets: $targets, isLayoutInitialized: $isLayoutInitialized)
+            WorkBench(
+                balls: $balls,
+                targets: $targets,
+                isLayoutInitialized: $isLayoutInitialized,
+                isWandUnlocked: isWandUnlocked,
+                onWandCast: onWandCast
+            )
         }
         .ignoresSafeArea()
     }
@@ -175,6 +186,8 @@ struct WorkBench: View {
     @Binding var targets: [TargetDataType]
     
     @Binding var isLayoutInitialized: Bool
+    let isWandUnlocked: Bool
+    let onWandCast: () -> Void
 
     var body: some View {
         ZStack {
@@ -189,14 +202,23 @@ struct WorkBench: View {
                 let tableBounds = CGRect(origin: .zero, size: geometry.size)
 
                 ZStack(alignment: .bottomLeading) {
-                    HStack(spacing: 0) {
-                        Spacer()
+                    HStack(alignment: .center, spacing: 18) {
+                        Spacer(minLength: 24)
+
+                        Color.clear
+                            .frame(width: WorkBenchPotionLayout.shelfWidth, height: WorkBenchPotionLayout.shelfHeight)
+
                         HStack(spacing: 24) {
                             ForEach(targets.indices, id: \.self) { index in
                                 TargetPotionBox(targetPotion: $targets[index])
                             }
                         }
-                        .frame(maxWidth: 500)
+                        .frame(maxWidth: 360)
+
+                        WandToolView(isUnlocked: isWandUnlocked, onCast: onWandCast)
+                            .frame(width: 180, height: 230)
+
+                        Spacer(minLength: 24)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -277,6 +299,84 @@ struct TargetPotionBox: View {
                     }
             }
         )
+    }
+}
+
+struct WandToolView: View {
+    let isUnlocked: Bool
+    let onCast: () -> Void
+
+    @State private var dragOffset: CGSize = .zero
+    @State private var isCasting = false
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(isUnlocked ? "Magic Wand" : "Locked")
+                .font(.system(size: 13, weight: .black, design: .rounded))
+                .foregroundStyle(.white.opacity(isUnlocked ? 0.96 : 0.72))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Color.black.opacity(0.2), in: Capsule())
+
+            ZStack {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(Color.white.opacity(isUnlocked ? 0.18 : 0.09))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .stroke(Color.white.opacity(isUnlocked ? 0.42 : 0.18), lineWidth: 2)
+                    )
+
+                wandImage
+
+                if !isUnlocked {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 32, weight: .black))
+                        .foregroundStyle(.white)
+                        .padding(18)
+                        .background(Color.black.opacity(0.36), in: Circle())
+                }
+            }
+        }
+    }
+
+    private var wandGesture: some Gesture {
+        DragGesture(minimumDistance: 6)
+            .onChanged { value in
+                let limitedY = min(max(value.translation.height, -120), 22)
+                dragOffset = CGSize(width: min(max(value.translation.width, -34), 18), height: limitedY)
+                isCasting = limitedY < -52
+            }
+            .onEnded { value in
+                let didCast = value.translation.height < -72
+                withAnimation(.spring(response: 0.34, dampingFraction: 0.72)) {
+                    dragOffset = .zero
+                    isCasting = false
+                }
+
+                if didCast {
+                    SoundEffectPlayer.shared.play(named: "mixkit-fairy-magic-sparkle-871", fileExtension: "wav")
+                    onCast()
+                }
+            }
+    }
+
+    @ViewBuilder
+    private var wandImage: some View {
+        let image = loadBundledImage("tongkat.png")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 118, height: 155)
+            .rotationEffect(.degrees(isCasting ? -24 : -10))
+            .offset(dragOffset)
+            .opacity(isUnlocked ? 1.0 : 0.38)
+            .saturation(isUnlocked ? 1.0 : 0.0)
+            .shadow(color: Color.yellow.opacity(isUnlocked ? 0.55 : 0.0), radius: 16, x: 0, y: 0)
+
+        if isUnlocked {
+            image.gesture(wandGesture)
+        } else {
+            image
+        }
     }
 }
 
@@ -523,7 +623,13 @@ struct WorkBenchOnly_PreviewContainer: View {
     @State var isLayoutInitialized: Bool = false
 
     var body: some View {
-        WorkBenchOnly(balls: $potionsList, targets: $targetList, isLayoutInitialized: $isLayoutInitialized)
+        WorkBenchOnly(
+            balls: $potionsList,
+            targets: $targetList,
+            isLayoutInitialized: $isLayoutInitialized,
+            isWandUnlocked: true,
+            onWandCast: {}
+        )
     }
 }
 
