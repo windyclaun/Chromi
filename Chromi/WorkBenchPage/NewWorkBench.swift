@@ -31,6 +31,7 @@ struct NewWorkBench: View {
     @State private var isReset = false
     @State private var fruitColorProgress: CGFloat = 0
     @State private var workbenchResetToken = UUID()
+    @State private var initialLayoutSnapshot: [PotionType] = []
 
     init(
         modelName: String,
@@ -81,6 +82,7 @@ struct NewWorkBench: View {
                 isLayoutInitialized: $isReset,
                 isWandUnlocked: isWandUnlocked,
                 showsTutorial: showsTutorial,
+                onInitialLayoutCaptured: captureInitialLayout,
                 onWandProgress: updateWandProgress,
                 onWandCast: castWandToFruit
             )
@@ -140,13 +142,29 @@ struct NewWorkBench: View {
     }
     
     private func resetGameLevel() {
-        self.potionsList = initialBalls.map { PotionType(colorName: $0.colorName, isUnlocked: $0.isUnlocked, position: .zero) }
+        if !initialLayoutSnapshot.isEmpty {
+            self.potionsList = initialLayoutSnapshot.map {
+                PotionType(
+                    colorName: $0.colorName,
+                    isUnlocked: $0.isUnlocked,
+                    position: $0.homePosition,
+                    homePosition: $0.homePosition
+                )
+            }
+        } else {
+            self.potionsList = initialBalls.map { PotionType(colorName: $0.colorName, isUnlocked: $0.isUnlocked, position: .zero) }
+        }
         
         self.targetList = initialTargets.map { TargetDataType(colorName: $0.colorName, isMatched: false, globalFrame: .zero) }
         
         self.isReset = false
         self.fruitColorProgress = 0
         self.workbenchResetToken = UUID()
+    }
+
+    private func captureInitialLayout(_ layout: [PotionType]) {
+        guard !layout.isEmpty else { return }
+        initialLayoutSnapshot = layout
     }
 
     private var isWandUnlocked: Bool {
