@@ -58,25 +58,15 @@ struct WorkbenchTutorialView: View {
                     switch tutorialMode {
                     case .mix:
                         tutorialArrow(from: sourcePosition, to: destinationPosition)
+                        tutorialMarker(at: sourcePosition)
+                        tutorialMarker(at: destinationPosition)
 
-                        PotionImageView(colorName: mixSourceColor)
-                            .frame(width: 82, height: 82)
-                            .scaleEffect(animate ? 1.08 : 0.96)
-                            .rotationEffect(.degrees(animate ? 8 : -8))
-                            .position(animate ? destinationPosition : sourcePosition)
-                            .shadow(color: Color.white.opacity(0.55), radius: 14, x: 0, y: 0)
-                            .animation(.easeInOut(duration: 0.95).repeatForever(autoreverses: true), value: animate)
+                        tutorialPointer(from: sourcePosition, to: destinationPosition)
 
                     case .target:
                         tutorialArrow(from: redPosition, to: targetPosition)
 
-                        PotionImageView(colorName: "red")
-                            .frame(width: 82, height: 82)
-                            .scaleEffect(animate ? 1.08 : 0.96)
-                            .rotationEffect(.degrees(animate ? 8 : -8))
-                            .position(animate ? targetPosition : redPosition)
-                            .shadow(color: Color.white.opacity(0.55), radius: 14, x: 0, y: 0)
-                            .animation(.easeInOut(duration: 0.95).repeatForever(autoreverses: true), value: animate)
+                        tutorialPointer(from: redPosition, to: targetPosition)
 
                     case .hidden:
                         EmptyView()
@@ -139,7 +129,7 @@ struct WorkbenchTutorialView: View {
     }
 
     private func position(for colorName: String, in size: CGSize) -> CGPoint {
-        if let ball = balls.first(where: { $0.colorName == colorName }) {
+        if let ball = balls.first(where: { $0.colorName == colorName && $0.isUnlocked }) {
             return CGPoint(
                 x: ball.position.x + WorkBenchPotionLayout.size / 2,
                 y: ball.position.y + WorkBenchPotionLayout.size / 2
@@ -156,6 +146,28 @@ struct WorkbenchTutorialView: View {
             .rotationEffect(.radians(Double(atan2(end.y - start.y, end.x - start.x))))
             .shadow(color: Color.black.opacity(0.35), radius: 5, x: 0, y: 2)
             .position(x: (start.x + end.x) / 2, y: (start.y + end.y) / 2)
+    }
+
+    private func tutorialMarker(at position: CGPoint) -> some View {
+        Circle()
+            .stroke(Color.white.opacity(0.84), lineWidth: 3)
+            .frame(width: 76, height: 76)
+            .scaleEffect(animate ? 1.14 : 0.92)
+            .opacity(animate ? 0.4 : 0.9)
+            .shadow(color: Color.white.opacity(0.55), radius: 10, x: 0, y: 0)
+            .position(position)
+            .animation(.easeInOut(duration: 0.95).repeatForever(autoreverses: true), value: animate)
+    }
+
+    private func tutorialPointer(from start: CGPoint, to end: CGPoint) -> some View {
+        Image(systemName: "hand.point.up.left.fill")
+            .font(.system(size: 34, weight: .black))
+            .foregroundStyle(.white)
+            .shadow(color: Color.black.opacity(0.34), radius: 6, x: 0, y: 3)
+            .rotationEffect(.degrees(animate ? -8 : 4))
+            .position(animate ? end : start)
+            .offset(x: 24, y: 22)
+            .animation(.easeInOut(duration: 0.95).repeatForever(autoreverses: true), value: animate)
     }
 }
 
