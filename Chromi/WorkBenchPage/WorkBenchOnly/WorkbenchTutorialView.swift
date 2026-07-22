@@ -32,11 +32,25 @@ struct WorkbenchTutorialView: View {
     }
 
     private var mixSourceColor: String {
-        modelName == "Lemon1" || modelName == "Avocado" ? "min_blue" : "blue"
+        switch modelName {
+        case "Lemon1":
+            return "min_red"
+        case "Avocado":
+            return "min_blue"
+        default:
+            return "blue"
+        }
     }
 
     private var mixDestinationColor: String {
-        modelName == "Lemon1" || modelName == "Avocado" ? "purple" : "yellow"
+        switch modelName {
+        case "Lemon1":
+            return "orange"
+        case "Avocado":
+            return "purple"
+        default:
+            return "yellow"
+        }
     }
 
     private var targetPrompt: String {
@@ -57,16 +71,10 @@ struct WorkbenchTutorialView: View {
 
                     switch tutorialMode {
                     case .mix:
-                        tutorialArrow(from: sourcePosition, to: destinationPosition)
-                        tutorialMarker(at: sourcePosition)
-                        tutorialMarker(at: destinationPosition)
-
                         tutorialPointer(from: sourcePosition, to: destinationPosition)
 
                     case .target:
-                        tutorialArrow(from: redPosition, to: targetPosition)
-
-                        tutorialPointer(from: redPosition, to: targetPosition)
+                        tutorialPotion(colorName: "red", from: redPosition, to: targetPosition)
 
                     case .hidden:
                         EmptyView()
@@ -109,7 +117,10 @@ struct WorkbenchTutorialView: View {
     private var tutorialCopy: String {
         switch tutorialMode {
         case .mix:
-            if modelName == "Lemon1" || modelName == "Avocado" {
+            if modelName == "Lemon1" {
+                return "Drag Minus Red to Orange."
+            }
+            if modelName == "Avocado" {
                 return "Drag Minus Blue to Purple."
             }
             return "Drag Blue to Yellow."
@@ -139,26 +150,6 @@ struct WorkbenchTutorialView: View {
         return CGPoint(x: size.width * 0.18, y: size.height * 0.62)
     }
 
-    private func tutorialArrow(from start: CGPoint, to end: CGPoint) -> some View {
-        Image(systemName: "arrow.right")
-            .font(.system(size: 26, weight: .black))
-            .foregroundStyle(.white)
-            .rotationEffect(.radians(Double(atan2(end.y - start.y, end.x - start.x))))
-            .shadow(color: Color.black.opacity(0.35), radius: 5, x: 0, y: 2)
-            .position(x: (start.x + end.x) / 2, y: (start.y + end.y) / 2)
-    }
-
-    private func tutorialMarker(at position: CGPoint) -> some View {
-        Circle()
-            .stroke(Color.white.opacity(0.84), lineWidth: 3)
-            .frame(width: 76, height: 76)
-            .scaleEffect(animate ? 1.14 : 0.92)
-            .opacity(animate ? 0.4 : 0.9)
-            .shadow(color: Color.white.opacity(0.55), radius: 10, x: 0, y: 0)
-            .position(position)
-            .animation(.easeInOut(duration: 0.95).repeatForever(autoreverses: true), value: animate)
-    }
-
     private func tutorialPointer(from start: CGPoint, to end: CGPoint) -> some View {
         Image(systemName: "hand.point.up.left.fill")
             .font(.system(size: 34, weight: .black))
@@ -167,6 +158,16 @@ struct WorkbenchTutorialView: View {
             .rotationEffect(.degrees(animate ? -8 : 4))
             .position(animate ? end : start)
             .offset(x: 24, y: 22)
+            .animation(.easeInOut(duration: 0.95).repeatForever(autoreverses: true), value: animate)
+    }
+
+    private func tutorialPotion(colorName: String, from start: CGPoint, to end: CGPoint) -> some View {
+        PotionImageView(colorName: colorName)
+            .frame(width: 82, height: 82)
+            .scaleEffect(animate ? 1.08 : 0.96)
+            .rotationEffect(.degrees(animate ? 8 : -8))
+            .position(animate ? end : start)
+            .shadow(color: Color.white.opacity(0.55), radius: 14, x: 0, y: 0)
             .animation(.easeInOut(duration: 0.95).repeatForever(autoreverses: true), value: animate)
     }
 }

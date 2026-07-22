@@ -153,7 +153,7 @@ struct WorkBench: View {
                         }
                     }
 
-                    if showsTutorial {
+                    if isLayoutInitialized && showsTutorial {
                         WorkbenchTutorialView(modelName: modelName, balls: balls, targets: targets)
                             .allowsHitTesting(false)
                             .transition(.opacity)
