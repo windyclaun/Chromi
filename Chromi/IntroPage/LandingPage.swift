@@ -135,21 +135,24 @@ struct LandingPage: View {
     }
 
     // MARK: - Components
+    @ViewBuilder
     private var skipButton: some View {
-        Button("Skip") {
-            SoundEffectPlayer.shared.play(named: "ClickNextIntro", fileExtension: "m4a")
-            pageTransitionDirection = 1
-            withAnimation(.spring(response: 0.52, dampingFraction: 0.9)) {
-                currentPage = pages.count - 1
+        if currentPage < pages.count - 1 {
+            Button("Skip") {
+                SoundEffectPlayer.shared.play(named: "ClickNextIntro", fileExtension: "m4a")
+                pageTransitionDirection = 1
+                withAnimation(.spring(response: 0.52, dampingFraction: 0.9)) {
+                    currentPage = pages.count - 1
+                }
             }
+            .font(.system(size: 18, weight: .heavy, design: .rounded))
+            .foregroundStyle(Color(red: 1.0, green: 0.84, blue: 0.22))
+            .padding(.horizontal, 22)
+            .padding(.vertical, 12)
+            .background(Color.white.opacity(0.15), in: Capsule())
+            .overlay(Capsule().stroke(Color(red: 1.0, green: 0.76, blue: 0.25).opacity(0.8), lineWidth: 2))
+            .shadow(color: Color.black.opacity(0.24), radius: 10, x: 0, y: 5)
         }
-        .font(.system(size: 18, weight: .heavy, design: .rounded))
-        .foregroundStyle(Color(red: 1.0, green: 0.84, blue: 0.22))
-        .padding(.horizontal, 22)
-        .padding(.vertical, 12)
-        .background(Color.white.opacity(0.15), in: Capsule())
-        .overlay(Capsule().stroke(Color(red: 1.0, green: 0.76, blue: 0.25).opacity(0.8), lineWidth: 2))
-        .shadow(color: Color.black.opacity(0.24), radius: 10, x: 0, y: 5)
     }
 
     private func mascotView(width: CGFloat) -> some View {

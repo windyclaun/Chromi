@@ -20,6 +20,7 @@ struct ColoringStageView: View {
     
     @State private var isBubbleFloating = false
     @State private var isMascotFloating = false
+    @State private var isTapPointerMoving = false
     
     var onOpenWorkbench: () -> Void
 
@@ -33,19 +34,24 @@ struct ColoringStageView: View {
                 VStack(spacing: 10) {
                     fruitTag
 
-                    RotatableFruitModelView(
-                        modelName: modelName,
-                        yaw: $fruitYaw,
-                        pitch: $fruitPitch,
-                        lastDrag: $lastFruitDrag,
-                        width: min(geometrySize.width * (isLandscape ? 0.38 : 0.72), 500),
-                        height: min(height * 0.72, 470),
-                        colorProgress: 0,
-                        shadowOpacity: 0.22
-                    )
+                    ZStack {
+                        RotatableFruitModelView(
+                            modelName: modelName,
+                            yaw: $fruitYaw,
+                            pitch: $fruitPitch,
+                            lastDrag: $lastFruitDrag,
+                            width: min(geometrySize.width * (isLandscape ? 0.38 : 0.72), 500),
+                            height: min(height * 0.72, 470),
+                            colorProgress: 0,
+                            shadowOpacity: 0.22
+                        )
                         .onTapGesture {
                             onOpenWorkbench()
                         }
+
+                        tapInstructionPointer
+                            .allowsHitTesting(false)
+                    }
                 }
 
                 TwoFingerRotationHint()
@@ -75,6 +81,7 @@ struct ColoringStageView: View {
         .onAppear {
             isBubbleFloating = true
             isMascotFloating = true
+            isTapPointerMoving = true
         }
     }
 
@@ -161,6 +168,17 @@ struct ColoringStageView: View {
             .frame(width: 200, height: 30)
             .blur(radius: 14)
             .offset(y: 16)
+    }
+
+    private var tapInstructionPointer: some View {
+        Image(systemName: "hand.point.up.left.fill")
+            .font(.system(size: 36, weight: .black))
+            .foregroundStyle(.white)
+            .shadow(color: Color.black.opacity(0.36), radius: 6, x: 0, y: 3)
+            .scaleEffect(isTapPointerMoving ? 0.9 : 1.12)
+            .rotationEffect(.degrees(isTapPointerMoving ? -10 : 4))
+            .offset(x: isTapPointerMoving ? 42 : 18, y: isTapPointerMoving ? 34 : 8)
+            .animation(.easeInOut(duration: 0.82).repeatForever(autoreverses: true), value: isTapPointerMoving)
     }
 
 }
