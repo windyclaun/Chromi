@@ -17,7 +17,7 @@ struct LevelNode: Identifiable, Equatable {
 
     private static let baseLevels: [(id: Int, title: String, mapPosition: CGPoint)] = [
         (id: 1, title: "Apple Peak", mapPosition: CGPoint(x: 0.08, y: 0.63)),
-        (id: 2, title: "Watermelon Way", mapPosition: CGPoint(x: 0.14, y: 0.42)),
+        (id: 2, title: "Melon Way", mapPosition: CGPoint(x: 0.14, y: 0.42)),
         (id: 3, title: "Orange Isle", mapPosition: CGPoint(x: 0.22, y: 0.70)),
         (id: 4, title: "Eggplant Grove", mapPosition: CGPoint(x: 0.32, y: 0.46)),
         (id: 5, title: "Lemon Land", mapPosition: CGPoint(x: 0.45, y: 0.65)),

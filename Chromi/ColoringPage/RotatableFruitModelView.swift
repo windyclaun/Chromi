@@ -81,6 +81,8 @@ struct TwoFingerFruitRotationView: UIViewRepresentable {
     func makeUIView(context: Context) -> UIView {
         let view = UIView(frame: .zero)
         view.backgroundColor = .clear
+        view.isUserInteractionEnabled = true
+        view.isMultipleTouchEnabled = true
 
         let panGesture = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handlePan(_:)))
         panGesture.minimumNumberOfTouches = 2

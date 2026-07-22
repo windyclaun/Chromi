@@ -23,6 +23,7 @@ struct RealityFruitView: UIViewRepresentable {
         arView.backgroundColor = .clear
         arView.environment.background = .color(.clear)
         arView.isUserInteractionEnabled = true
+        arView.isMultipleTouchEnabled = true
         arView.renderOptions.insert(.disableMotionBlur)
         arView.renderOptions.insert(.disableDepthOfField)
 

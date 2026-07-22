@@ -97,28 +97,17 @@ struct EndingPageView: View {
                 .blur(radius: 24)
                 .blendMode(.screen)
 
-            RealityFruitView(modelName: modelName, yaw: fruitYaw, pitch: fruitPitch, isMonochrome: false)
-                .id(modelName)
-                .frame(width: size, height: size)
-                .contentShape(Rectangle())
-                .gesture(fruitRotationGesture)
-                .shadow(color: Color.black.opacity(0.24), radius: 18, x: 0, y: 14)
+            RotatableFruitModelView(
+                modelName: modelName,
+                yaw: $fruitYaw,
+                pitch: $fruitPitch,
+                lastDrag: $lastFruitDrag,
+                width: size,
+                height: size,
+                colorProgress: 1,
+                shadowOpacity: 0.24
+            )
         }
-    }
-
-    private var fruitRotationGesture: some Gesture {
-        DragGesture(minimumDistance: 4)
-            .onChanged { value in
-                let deltaX = value.translation.width - lastFruitDrag.width
-                let deltaY = value.translation.height - lastFruitDrag.height
-
-                fruitYaw += Float(deltaX) * 0.01
-                fruitPitch += Float(deltaY) * 0.01
-                lastFruitDrag = value.translation
-            }
-            .onEnded { _ in
-                lastFruitDrag = .zero
-            }
     }
 }
 

@@ -129,8 +129,8 @@ enum WorkbenchLevelRecipe {
         case "Lemon1":
             return WorkbenchLevelConfig(
                 targets: ["yellow"],
-                unlockedPotions: ["orange", "purple", "red", "blue", "green", "min_red", "min_blue", "min_yellow"],
-                lockedPotions: ["yellow", "brown"]
+                unlockedPotions: ["orange", "purple", "blue", "green", "min_red", "min_blue", "min_yellow"],
+                lockedPotions: ["red", "yellow", "brown"]
             )
         case "Coconut":
             return WorkbenchLevelConfig(
@@ -157,10 +157,11 @@ enum WorkbenchLevelRecipe {
 struct WorkBenchOnly: View {
     @Binding var balls: [PotionType]
     @Binding var targets: [TargetDataType]
+    let modelName: String
     
     @Binding var isLayoutInitialized: Bool
     let isWandUnlocked: Bool
-    let showsLevelOneTutorial: Bool
+    let showsTutorial: Bool
     let onWandProgress: (CGFloat) -> Void
     let onWandCast: () -> Void
 
@@ -175,9 +176,10 @@ struct WorkBenchOnly: View {
             WorkBench(
                 balls: $balls,
                 targets: $targets,
+                modelName: modelName,
                 isLayoutInitialized: $isLayoutInitialized,
                 isWandUnlocked: isWandUnlocked,
-                showsLevelOneTutorial: showsLevelOneTutorial,
+                showsTutorial: showsTutorial,
                 onWandProgress: onWandProgress,
                 onWandCast: onWandCast
             )
@@ -189,12 +191,14 @@ struct WorkBenchOnly: View {
 struct WorkBench: View {
     @Binding var balls: [PotionType]
     @Binding var targets: [TargetDataType]
+    let modelName: String
     
     @Binding var isLayoutInitialized: Bool
     let isWandUnlocked: Bool
-    let showsLevelOneTutorial: Bool
+    let showsTutorial: Bool
     let onWandProgress: (CGFloat) -> Void
     let onWandCast: () -> Void
+    @State private var preparedPotionIndices: Set<Int> = []
 
     var body: some View {
         ZStack {
@@ -233,7 +237,7 @@ struct WorkBench: View {
                             onProgress: onWandProgress,
                             onCast: onWandCast
                         )
-                            .frame(width: 180, height: 230)
+                            .frame(width: 220, height: 290)
 
                         Spacer(minLength: 24)
                     }
@@ -256,8 +260,9 @@ struct WorkBench: View {
                                                     let localFrame = itemGeo.frame(in: .named("TableSpace"))
                                                     balls[index].position = CGPoint(x: localFrame.minX, y: localFrame.minY)
                                                     balls[index].homePosition = balls[index].position
+                                                    preparedPotionIndices.insert(index)
 
-                                                    if index == balls.count - 1 {
+                                                    if preparedPotionIndices.count == balls.count {
                                                         isLayoutInitialized = true
                                                     }
                                                 }
@@ -268,6 +273,9 @@ struct WorkBench: View {
                             }
                             .padding(.leading, 36)
                             .frame(width: WorkBenchPotionLayout.shelfWidth, height: WorkBenchPotionLayout.shelfHeight, alignment: .leading)
+                            .onChange(of: balls.count) { _, _ in
+                                preparedPotionIndices.removeAll()
+                            }
 
                             Spacer()
                         }
@@ -283,8 +291,8 @@ struct WorkBench: View {
                         }
                     }
 
-                    if showsLevelOneTutorial {
-                        LevelOneWorkbenchTutorialView(balls: balls, targets: targets)
+                    if showsTutorial {
+                        WorkbenchTutorialView(modelName: modelName, balls: balls, targets: targets)
                             .allowsHitTesting(false)
                             .transition(.opacity)
                     }
@@ -296,48 +304,87 @@ struct WorkBench: View {
     }
 }
 
-struct LevelOneWorkbenchTutorialView: View {
+struct WorkbenchTutorialView: View {
+    let modelName: String
     let balls: [PotionType]
     let targets: [TargetDataType]
 
     @State private var animate = false
 
-    private var isGreenUnlocked: Bool {
-        balls.contains { $0.colorName == "green" && $0.isUnlocked }
+    private enum TutorialMode {
+        case mix
+        case target
+        case hidden
+    }
+
+    private var tutorialMode: TutorialMode {
+        switch modelName {
+        case "Apple":
+            return balls.contains(where: { $0.colorName == "green" && $0.isUnlocked }) ? .target : .mix
+        case "Lemon1", "Avocado":
+            return balls.contains(where: { $0.colorName == "red" && $0.isUnlocked }) ? .hidden : .mix
+        default:
+            return .hidden
+        }
+    }
+
+    private var mixSourceColor: String {
+        modelName == "Lemon1" || modelName == "Avocado" ? "min_blue" : "blue"
+    }
+
+    private var mixDestinationColor: String {
+        modelName == "Lemon1" || modelName == "Avocado" ? "purple" : "yellow"
+    }
+
+    private var targetPrompt: String {
+        modelName == "Avocado" ? "Now drag Red to the target." : "Now drag Red to the target."
     }
 
     var body: some View {
         GeometryReader { geometry in
-            let bluePosition = position(for: "blue", in: geometry.size)
-            let yellowPosition = position(for: "yellow", in: geometry.size)
+            let sourcePosition = position(for: mixSourceColor, in: geometry.size)
+            let destinationPosition = position(for: mixDestinationColor, in: geometry.size)
             let redPosition = position(for: "red", in: geometry.size)
             let targetPosition = targets.first?.globalFrame.centerPoint ?? CGPoint(x: geometry.size.width * 0.68, y: geometry.size.height * 0.58)
 
-            ZStack {
-                tutorialBubble
-                    .position(x: geometry.size.width * 0.5, y: geometry.size.height * 0.16)
+            if tutorialMode != .hidden {
+                ZStack {
+                    tutorialBubble
+                        .position(x: geometry.size.width * 0.5, y: geometry.size.height * 0.16)
 
-                if isGreenUnlocked {
-                    tutorialArrow(from: redPosition, to: targetPosition)
+                    switch tutorialMode {
+                    case .mix:
+                        tutorialArrow(from: sourcePosition, to: destinationPosition)
 
-                    PotionImageView(colorName: "red")
-                        .frame(width: 70, height: 70)
-                        .position(animate ? targetPosition : redPosition)
-                        .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: animate)
-                } else {
-                    tutorialArrow(from: bluePosition, to: yellowPosition)
+                        PotionImageView(colorName: mixSourceColor)
+                            .frame(width: 82, height: 82)
+                            .scaleEffect(animate ? 1.08 : 0.96)
+                            .rotationEffect(.degrees(animate ? 8 : -8))
+                            .position(animate ? destinationPosition : sourcePosition)
+                            .shadow(color: Color.white.opacity(0.55), radius: 14, x: 0, y: 0)
+                            .animation(.easeInOut(duration: 0.95).repeatForever(autoreverses: true), value: animate)
 
-                    PotionImageView(colorName: "blue")
-                        .frame(width: 70, height: 70)
-                        .position(animate ? yellowPosition : bluePosition)
-                        .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: animate)
+                    case .target:
+                        tutorialArrow(from: redPosition, to: targetPosition)
+
+                        PotionImageView(colorName: "red")
+                            .frame(width: 82, height: 82)
+                            .scaleEffect(animate ? 1.08 : 0.96)
+                            .rotationEffect(.degrees(animate ? 8 : -8))
+                            .position(animate ? targetPosition : redPosition)
+                            .shadow(color: Color.white.opacity(0.55), radius: 14, x: 0, y: 0)
+                            .animation(.easeInOut(duration: 0.95).repeatForever(autoreverses: true), value: animate)
+
+                    case .hidden:
+                        EmptyView()
+                    }
                 }
             }
         }
         .onAppear {
             animate = true
         }
-        .onChange(of: isGreenUnlocked) { _, _ in
+        .onChange(of: tutorialModeKey) { _, _ in
             animate = false
             DispatchQueue.main.async {
                 animate = true
@@ -349,7 +396,7 @@ struct LevelOneWorkbenchTutorialView: View {
         VStack(spacing: 3) {
             Text("Tutorial")
                 .font(.system(size: 13, weight: .black, design: .rounded))
-            Text(isGreenUnlocked ? "Drag Red to the target." : "Drag Blue to Yellow to make Green.")
+            Text(tutorialCopy)
                 .font(.system(size: 12, weight: .heavy, design: .rounded))
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
@@ -364,6 +411,28 @@ struct LevelOneWorkbenchTutorialView: View {
         )
         .frame(width: 280)
         .shadow(color: Color.black.opacity(0.16), radius: 10, x: 0, y: 5)
+    }
+
+    private var tutorialCopy: String {
+        switch tutorialMode {
+        case .mix:
+            if modelName == "Lemon1" || modelName == "Avocado" {
+                return "Drag Minus Blue to Purple."
+            }
+            return "Drag Blue to Yellow."
+        case .target:
+            return targetPrompt
+        case .hidden:
+            return ""
+        }
+    }
+
+    private var tutorialModeKey: String {
+        switch tutorialMode {
+        case .mix: return "mix"
+        case .target: return "target"
+        case .hidden: return "hidden"
+        }
     }
 
     private func position(for colorName: String, in size: CGSize) -> CGPoint {
@@ -464,14 +533,17 @@ struct WandToolView: View {
     private var wandGesture: some Gesture {
         DragGesture(minimumDistance: 6)
             .onChanged { value in
-                let limitedY = min(max(value.translation.height, -330), 22)
-                let progress = min(max(abs(min(limitedY, 0)) / 300, 0), 1)
-                dragOffset = CGSize(width: min(max(value.translation.width, -80), 18), height: limitedY)
+                let limitedX = min(max(value.translation.width, -360), 42)
+                let limitedY = min(max(value.translation.height, -520), 28)
+                let upwardProgress = abs(min(limitedY, 0)) / 430
+                let leftProgress = abs(min(limitedX, 0)) / 300
+                let progress = min(max((upwardProgress * 0.74) + (leftProgress * 0.26), 0), 1)
+                dragOffset = CGSize(width: limitedX, height: limitedY)
                 isCasting = progress > 0.22
                 onProgress(progress)
             }
             .onEnded { value in
-                let didCast = value.translation.height < -250
+                let didCast = value.translation.height < -380 || (value.translation.height < -280 && value.translation.width < -180)
                 withAnimation(.spring(response: 0.34, dampingFraction: 0.72)) {
                     dragOffset = .zero
                     isCasting = false
@@ -492,8 +564,8 @@ struct WandToolView: View {
         let image = loadBundledImage("tongkat.png")
             .resizable()
             .scaledToFit()
-            .frame(width: 118, height: 155)
-            .rotationEffect(.degrees(isCasting ? -24 : -10))
+            .frame(width: 130, height: 174)
+            .rotationEffect(.degrees(isCasting ? -34 : -10))
             .offset(dragOffset)
             .opacity(isUnlocked ? 1.0 : 0.38)
             .saturation(isUnlocked ? 1.0 : 0.0)
@@ -769,9 +841,10 @@ struct WorkBenchOnly_PreviewContainer: View {
         WorkBenchOnly(
             balls: $potionsList,
             targets: $targetList,
+            modelName: "Apple",
             isLayoutInitialized: $isLayoutInitialized,
             isWandUnlocked: true,
-            showsLevelOneTutorial: true,
+            showsTutorial: true,
             onWandProgress: { _ in },
             onWandCast: {}
         )

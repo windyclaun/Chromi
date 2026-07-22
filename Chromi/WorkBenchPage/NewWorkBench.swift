@@ -30,6 +30,7 @@ struct NewWorkBench: View {
     @State private var showSuccessPage = false
     @State private var isReset = false
     @State private var fruitColorProgress: CGFloat = 0
+    @State private var workbenchResetToken = UUID()
 
     init(
         modelName: String,
@@ -76,13 +77,15 @@ struct NewWorkBench: View {
             WorkBenchOnly(
                 balls: $potionsList,
                 targets: $targetList,
+                modelName: modelName,
                 isLayoutInitialized: $isReset,
                 isWandUnlocked: isWandUnlocked,
-                showsLevelOneTutorial: showsLevelOneTutorial,
+                showsTutorial: showsTutorial,
                 onWandProgress: updateWandProgress,
                 onWandCast: castWandToFruit
             )
-            .zIndex(1)
+            .id(workbenchResetToken)
+            .zIndex(3)
             
             WorkBenchTopButton(onBack: onBack, onRestart: resetGameLevel, isPauseGame: $isPauseGame)
                 .zIndex(10)
@@ -143,14 +146,22 @@ struct NewWorkBench: View {
         
         self.isReset = false
         self.fruitColorProgress = 0
+        self.workbenchResetToken = UUID()
     }
 
     private var isWandUnlocked: Bool {
         !targetList.isEmpty && targetList.allSatisfy(\.isMatched)
     }
 
-    private var showsLevelOneTutorial: Bool {
-        modelName == "Apple" && !targetList.contains(where: \.isMatched)
+    private var showsTutorial: Bool {
+        switch modelName {
+        case "Apple":
+            return !targetList.contains(where: \.isMatched)
+        case "Lemon1":
+            return !potionsList.contains(where: { $0.colorName == "red" && $0.isUnlocked })
+        default:
+            return false
+        }
     }
 
     private func castWandToFruit() {
