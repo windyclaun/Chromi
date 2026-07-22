@@ -59,7 +59,7 @@ struct TwoFingerRotationHint: View {
     var body: some View {
         HStack(spacing: 7) {
             Image(systemName: "hand.draw.fill")
-            Text("Drag to rotate")
+            Text("Use two fingers to rotate")
         }
         .font(.system(size: 13, weight: .black, design: .rounded))
         .foregroundStyle(.white.opacity(0.94))
@@ -85,7 +85,7 @@ struct TwoFingerFruitRotationView: UIViewRepresentable {
         view.isMultipleTouchEnabled = true
 
         let panGesture = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handlePan(_:)))
-        panGesture.minimumNumberOfTouches = 1
+        panGesture.minimumNumberOfTouches = 2
         panGesture.maximumNumberOfTouches = 2
         view.addGestureRecognizer(panGesture)
 

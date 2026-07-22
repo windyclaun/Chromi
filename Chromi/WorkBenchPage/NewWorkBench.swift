@@ -74,7 +74,7 @@ struct NewWorkBench: View {
                 )
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .zIndex(2)
+            .zIndex(4)
             WorkBenchOnly(
                 balls: $potionsList,
                 targets: $targetList,
