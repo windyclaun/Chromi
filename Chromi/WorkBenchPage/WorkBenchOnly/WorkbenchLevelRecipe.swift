@@ -18,7 +18,7 @@ enum WorkbenchLevelRecipe {
         switch modelName {
         case "Apple", "Placeholder8", "Placeholder9", "Placeholder10":
             return levelOnePlaceholder
-        case "Watermelon":
+        case "Melon":
             return WorkbenchLevelConfig(
                 targets: ["green"],
                 unlockedPotions: ["red", "yellow", "blue"],

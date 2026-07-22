@@ -157,7 +157,7 @@ struct NewWorkBench: View {
         
         self.targetList = initialTargets.map { TargetDataType(colorName: $0.colorName, isMatched: false, globalFrame: .zero) }
         
-        self.isReset = false
+        self.isReset = true
         self.fruitColorProgress = 0
         self.workbenchResetToken = UUID()
     }
