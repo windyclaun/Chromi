@@ -51,8 +51,8 @@ enum WorkbenchLevelRecipe {
         case "Avocado":
             return WorkbenchLevelConfig(
                 targets: ["green"],
-                unlockedPotions: ["purple", "yellow", "blue", "min_red", "min_blue", "min_yellow"],
-                lockedPotions: ["red", "orange", "green", "brown"]
+                unlockedPotions: ["purple", "yellow", "min_red", "min_blue", "min_yellow"],
+                lockedPotions: ["red", "orange", "green", "brown", "blue"]
             )
         default:
             return levelOnePlaceholder
