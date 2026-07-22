@@ -33,29 +33,22 @@ struct ColoringStageView: View {
                 VStack(spacing: 10) {
                     fruitTag
 
-                    RealityFruitView(modelName: modelName, yaw: fruitYaw, pitch: fruitPitch)
-                        .id(modelName)
-                        .frame(
-                            width: min(geometrySize.width * (isLandscape ? 0.38 : 0.72), 500),
-                            height: min(height * 0.72, 470)
-                        )
-                        .shadow(color: Color.black.opacity(0.22), radius: 20, x: 0, y: 18)
-                        .contentShape(Rectangle())
-                        .gesture(fruitRotationGesture)
+                    RotatableFruitModelView(
+                        modelName: modelName,
+                        yaw: $fruitYaw,
+                        pitch: $fruitPitch,
+                        lastDrag: $lastFruitDrag,
+                        width: min(geometrySize.width * (isLandscape ? 0.38 : 0.72), 500),
+                        height: min(height * 0.72, 470),
+                        colorProgress: 0,
+                        shadowOpacity: 0.22
+                    )
                         .onTapGesture {
                             onOpenWorkbench()
                         }
                 }
 
-                HStack(spacing: 7) {
-                    Image(systemName: "rotate.3d")
-                    Text("Drag in any direction to rotate")
-                }
-                .font(.system(size: 13, weight: .black, design: .rounded))
-                .foregroundStyle(.white.opacity(0.92))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 7)
-                .background(Color.black.opacity(0.18), in: Capsule())
+                TwoFingerRotationHint()
 
                 Button(action: onOpenWorkbench) {
                     ChromiStartButtonLabel(
@@ -170,20 +163,4 @@ struct ColoringStageView: View {
             .offset(y: 16)
     }
 
-    private var fruitRotationGesture: some Gesture {
-        DragGesture(minimumDistance: 4)
-            .onChanged { value in
-                guard !isPaused else { return }
-
-                let deltaX = value.translation.width - lastFruitDrag.width
-                let deltaY = value.translation.height - lastFruitDrag.height
-
-                fruitYaw += Float(deltaX) * 0.01
-                fruitPitch += Float(deltaY) * 0.01
-                lastFruitDrag = value.translation
-            }
-            .onEnded { _ in
-                lastFruitDrag = .zero
-            }
-    }
 }

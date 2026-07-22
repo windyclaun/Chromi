@@ -12,6 +12,7 @@ struct PotionType: Identifiable, Equatable {
     var colorName: String
     var isUnlocked: Bool = true
     var position: CGPoint = .zero
+    var homePosition: CGPoint = .zero
 }
 
 struct TargetDataType: Identifiable {
@@ -159,6 +160,7 @@ struct WorkBenchOnly: View {
     
     @Binding var isLayoutInitialized: Bool
     let isWandUnlocked: Bool
+    let showsLevelOneTutorial: Bool
     let onWandProgress: (CGFloat) -> Void
     let onWandCast: () -> Void
 
@@ -175,6 +177,7 @@ struct WorkBenchOnly: View {
                 targets: $targets,
                 isLayoutInitialized: $isLayoutInitialized,
                 isWandUnlocked: isWandUnlocked,
+                showsLevelOneTutorial: showsLevelOneTutorial,
                 onWandProgress: onWandProgress,
                 onWandCast: onWandCast
             )
@@ -189,6 +192,7 @@ struct WorkBench: View {
     
     @Binding var isLayoutInitialized: Bool
     let isWandUnlocked: Bool
+    let showsLevelOneTutorial: Bool
     let onWandProgress: (CGFloat) -> Void
     let onWandCast: () -> Void
 
@@ -251,6 +255,7 @@ struct WorkBench: View {
                                                 DispatchQueue.main.async {
                                                     let localFrame = itemGeo.frame(in: .named("TableSpace"))
                                                     balls[index].position = CGPoint(x: localFrame.minX, y: localFrame.minY)
+                                                    balls[index].homePosition = balls[index].position
 
                                                     if index == balls.count - 1 {
                                                         isLayoutInitialized = true
@@ -277,11 +282,114 @@ struct WorkBench: View {
                             )
                         }
                     }
+
+                    if showsLevelOneTutorial {
+                        LevelOneWorkbenchTutorialView(balls: balls, targets: targets)
+                            .allowsHitTesting(false)
+                            .transition(.opacity)
+                    }
                 }
             }
             .coordinateSpace(name: "TableSpace")
             .frame(maxWidth: .infinity, maxHeight: 450)
         }
+    }
+}
+
+struct LevelOneWorkbenchTutorialView: View {
+    let balls: [PotionType]
+    let targets: [TargetDataType]
+
+    @State private var animate = false
+
+    private var isGreenUnlocked: Bool {
+        balls.contains { $0.colorName == "green" && $0.isUnlocked }
+    }
+
+    var body: some View {
+        GeometryReader { geometry in
+            let bluePosition = position(for: "blue", in: geometry.size)
+            let yellowPosition = position(for: "yellow", in: geometry.size)
+            let redPosition = position(for: "red", in: geometry.size)
+            let targetPosition = targets.first?.globalFrame.centerPoint ?? CGPoint(x: geometry.size.width * 0.68, y: geometry.size.height * 0.58)
+
+            ZStack {
+                tutorialBubble
+                    .position(x: geometry.size.width * 0.5, y: geometry.size.height * 0.16)
+
+                if isGreenUnlocked {
+                    tutorialArrow(from: redPosition, to: targetPosition)
+
+                    PotionImageView(colorName: "red")
+                        .frame(width: 70, height: 70)
+                        .position(animate ? targetPosition : redPosition)
+                        .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: animate)
+                } else {
+                    tutorialArrow(from: bluePosition, to: yellowPosition)
+
+                    PotionImageView(colorName: "blue")
+                        .frame(width: 70, height: 70)
+                        .position(animate ? yellowPosition : bluePosition)
+                        .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: animate)
+                }
+            }
+        }
+        .onAppear {
+            animate = true
+        }
+        .onChange(of: isGreenUnlocked) { _, _ in
+            animate = false
+            DispatchQueue.main.async {
+                animate = true
+            }
+        }
+    }
+
+    private var tutorialBubble: some View {
+        VStack(spacing: 3) {
+            Text("Tutorial")
+                .font(.system(size: 13, weight: .black, design: .rounded))
+            Text(isGreenUnlocked ? "Drag Red to the target." : "Drag Blue to Yellow to make Green.")
+                .font(.system(size: 12, weight: .heavy, design: .rounded))
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+        }
+        .foregroundStyle(Color(red: 0.25, green: 0.08, blue: 0.58))
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(Color.white.opacity(0.92), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.purple.opacity(0.25), lineWidth: 2)
+        )
+        .frame(width: 280)
+        .shadow(color: Color.black.opacity(0.16), radius: 10, x: 0, y: 5)
+    }
+
+    private func position(for colorName: String, in size: CGSize) -> CGPoint {
+        if let ball = balls.first(where: { $0.colorName == colorName }) {
+            return CGPoint(
+                x: ball.position.x + WorkBenchPotionLayout.size / 2,
+                y: ball.position.y + WorkBenchPotionLayout.size / 2
+            )
+        }
+
+        return CGPoint(x: size.width * 0.18, y: size.height * 0.62)
+    }
+
+    private func tutorialArrow(from start: CGPoint, to end: CGPoint) -> some View {
+        Image(systemName: "arrow.right")
+            .font(.system(size: 26, weight: .black))
+            .foregroundStyle(.white)
+            .rotationEffect(.radians(Double(atan2(end.y - start.y, end.x - start.x))))
+            .shadow(color: Color.black.opacity(0.35), radius: 5, x: 0, y: 2)
+            .position(x: (start.x + end.x) / 2, y: (start.y + end.y) / 2)
+    }
+}
+
+private extension CGRect {
+    var centerPoint: CGPoint {
+        CGPoint(x: midX, y: midY)
     }
 }
 
@@ -571,33 +679,40 @@ struct InteractiveBallView: View {
             if let resultColor = mixedColor(activeBall.colorName, targetBall.colorName) {
                 addMixedPotion(
                     colorName: resultColor,
-                    from: activeBall.position,
-                    and: targetBall.position
+                    from: currentIndex,
+                    and: index
                 )
                 break
             }
         }
     }
 
-    private func addMixedPotion(colorName: String, from firstPosition: CGPoint, and secondPosition: CGPoint) {
-        let resultPosition = CGPoint(
-            x: (firstPosition.x + secondPosition.x) / 2,
-            y: (firstPosition.y + secondPosition.y) / 2
-        )
-
+    private func addMixedPotion(colorName: String, from firstIndex: Int, and secondIndex: Int) {
         if let lockedIndex = allBalls.firstIndex(where: { $0.colorName == colorName && !$0.isUnlocked }) {
             SoundEffectPlayer.shared.playColor(named: colorName)
             allBalls[lockedIndex].isUnlocked = true
-            allBalls[lockedIndex].position = resultPosition
+            allBalls[firstIndex].position = allBalls[firstIndex].homePosition
+            allBalls[secondIndex].position = allBalls[secondIndex].homePosition
             return
         }
 
         if allBalls.contains(where: { $0.colorName == colorName && $0.isUnlocked }) {
+            allBalls[firstIndex].position = allBalls[firstIndex].homePosition
+            allBalls[secondIndex].position = allBalls[secondIndex].homePosition
             return
         }
 
+        let firstHome = allBalls[firstIndex].homePosition
+        let secondHome = allBalls[secondIndex].homePosition
+        let resultPosition = CGPoint(
+            x: (firstHome.x + secondHome.x) / 2,
+            y: (firstHome.y + secondHome.y) / 2
+        )
+
         SoundEffectPlayer.shared.playColor(named: colorName)
-        allBalls.append(PotionType(colorName: colorName, isUnlocked: true, position: resultPosition))
+        allBalls[firstIndex].position = firstHome
+        allBalls[secondIndex].position = secondHome
+        allBalls.append(PotionType(colorName: colorName, isUnlocked: true, position: resultPosition, homePosition: resultPosition))
     }
 
     private func mixedColor(_ colorA: String, _ colorB: String) -> String? {
@@ -656,6 +771,7 @@ struct WorkBenchOnly_PreviewContainer: View {
             targets: $targetList,
             isLayoutInitialized: $isLayoutInitialized,
             isWandUnlocked: true,
+            showsLevelOneTutorial: true,
             onWandProgress: { _ in },
             onWandCast: {}
         )

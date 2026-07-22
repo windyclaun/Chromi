@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import UIKit
 
 struct NewWorkBench: View {
     let modelName: String
@@ -79,6 +78,7 @@ struct NewWorkBench: View {
                 targets: $targetList,
                 isLayoutInitialized: $isReset,
                 isWandUnlocked: isWandUnlocked,
+                showsLevelOneTutorial: showsLevelOneTutorial,
                 onWandProgress: updateWandProgress,
                 onWandCast: castWandToFruit
             )
@@ -147,6 +147,10 @@ struct NewWorkBench: View {
 
     private var isWandUnlocked: Bool {
         !targetList.isEmpty && targetList.allSatisfy(\.isMatched)
+    }
+
+    private var showsLevelOneTutorial: Bool {
+        modelName == "Apple" && !targetList.contains(where: \.isMatched)
     }
 
     private func castWandToFruit() {
@@ -303,36 +307,19 @@ struct FruitModelView: View {
             let topPadding = fruitHeightSize * 0.08
             
             VStack(spacing: 0) {
-                ZStack {
-                    RealityFruitView(modelName: modelName, yaw: fruitYaw, pitch: fruitPitch, isMonochrome: true)
-                        .id("\(modelName)-gray")
-                        .opacity(1 - min(max(fruitColorProgress, 0), 1))
-
-                    RealityFruitView(modelName: modelName, yaw: fruitYaw, pitch: fruitPitch, isMonochrome: false)
-                        .id("\(modelName)-color")
-                        .opacity(min(max(fruitColorProgress, 0), 1))
-                }
-                .frame(width: 500, height: fruitHeightSize)
-                .shadow(color: Color.black.opacity(0.24), radius: 18, x: 0, y: 16)
-                .contentShape(Rectangle())
-                .overlay {
-                    TwoFingerFruitRotationView(
-                        fruitYaw: $fruitYaw,
-                        fruitPitch: $fruitPitch,
-                        lastFruitDrag: $lastFruitDrag
-                    )
-                }
+                RotatableFruitModelView(
+                    modelName: modelName,
+                    yaw: $fruitYaw,
+                    pitch: $fruitPitch,
+                    lastDrag: $lastFruitDrag,
+                    width: 500,
+                    height: fruitHeightSize,
+                    colorProgress: fruitColorProgress,
+                    shadowOpacity: 0.24
+                )
                 .padding(.top, topPadding)
                 
-                HStack(spacing: 7) {
-                    Image(systemName: "rotate.3d")
-                    Text("Drag in any direction to rotate")
-                }
-                .font(.system(size: 13, weight: .black, design: .rounded))
-                .foregroundStyle(.white.opacity(0.94))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 7)
-                .background(Color.black.opacity(0.18), in: Capsule())
+                TwoFingerRotationHint()
                 
                 Spacer()
             }
@@ -348,58 +335,6 @@ struct FruitModelView: View {
 
     }
     
-}
-
-struct TwoFingerFruitRotationView: UIViewRepresentable {
-    @Binding var fruitYaw: Float
-    @Binding var fruitPitch: Float
-    @Binding var lastFruitDrag: CGSize
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(fruitYaw: $fruitYaw, fruitPitch: $fruitPitch, lastFruitDrag: $lastFruitDrag)
-    }
-
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView(frame: .zero)
-        view.backgroundColor = .clear
-
-        let panGesture = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handlePan(_:)))
-        panGesture.minimumNumberOfTouches = 2
-        panGesture.maximumNumberOfTouches = 2
-        view.addGestureRecognizer(panGesture)
-
-        return view
-    }
-
-    func updateUIView(_ uiView: UIView, context: Context) {}
-
-    final class Coordinator: NSObject {
-        private var fruitYaw: Binding<Float>
-        private var fruitPitch: Binding<Float>
-        private var lastFruitDrag: Binding<CGSize>
-
-        init(fruitYaw: Binding<Float>, fruitPitch: Binding<Float>, lastFruitDrag: Binding<CGSize>) {
-            self.fruitYaw = fruitYaw
-            self.fruitPitch = fruitPitch
-            self.lastFruitDrag = lastFruitDrag
-        }
-
-        @objc func handlePan(_ recognizer: UIPanGestureRecognizer) {
-            let translation = recognizer.translation(in: recognizer.view)
-            let currentDrag = CGSize(width: translation.x, height: translation.y)
-
-            switch recognizer.state {
-            case .began, .changed:
-                let deltaX = currentDrag.width - lastFruitDrag.wrappedValue.width
-                let deltaY = currentDrag.height - lastFruitDrag.wrappedValue.height
-                fruitYaw.wrappedValue += Float(deltaX) * 0.01
-                fruitPitch.wrappedValue += Float(deltaY) * 0.01
-                lastFruitDrag.wrappedValue = currentDrag
-            default:
-                lastFruitDrag.wrappedValue = .zero
-            }
-        }
-    }
 }
 
 struct Test_PreviewContainer: View {

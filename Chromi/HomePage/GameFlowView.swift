@@ -14,16 +14,25 @@ struct GameFlowView: View {
         case coloring
     }
 
+    private static var didResetProgressForDebugSession = false
+
     @AppStorage("chromi.highestUnlockedLevelID") private var highestUnlockedLevelID: Int = 1
-    @State private var stage: Stage = .intro
+    @AppStorage("chromi.hasSeenIntro") private var hasSeenIntro: Bool = false
+    @State private var stage: Stage
     @State private var selectedLevel: LevelNode?
     let onDismiss: () -> Void
 
     init(onDismiss: @escaping () -> Void) {
         #if DEBUG
-        UserDefaults.standard.set(1, forKey: "chromi.highestUnlockedLevelID")
+        if !Self.didResetProgressForDebugSession {
+            UserDefaults.standard.set(1, forKey: "chromi.highestUnlockedLevelID")
+            UserDefaults.standard.set(false, forKey: "chromi.hasSeenIntro")
+            Self.didResetProgressForDebugSession = true
+        }
         #endif
 
+        let hasSeenIntro = UserDefaults.standard.bool(forKey: "chromi.hasSeenIntro")
+        self._stage = State(initialValue: hasSeenIntro ? .level : .intro)
         self.onDismiss = onDismiss
     }
 
@@ -62,13 +71,16 @@ struct GameFlowView: View {
             .opacity(stage == .level ? 1 : 0)
             .allowsHitTesting(stage == .level)
 
-            LandingPage {
-                withAnimation(.easeInOut(duration: 0.42)) {
-                    stage = .level
+            if stage == .intro {
+                LandingPage {
+                    hasSeenIntro = true
+                    SoundEffectPlayer.shared.stopIntro()
+                    withAnimation(.easeInOut(duration: 0.42)) {
+                        stage = .level
+                    }
                 }
+                .transition(.opacity)
             }
-            .opacity(stage == .intro ? 1 : 0)
-            .allowsHitTesting(stage == .intro)
         }
         .background(Color.black.ignoresSafeArea())
         .animation(.easeInOut(duration: 0.42), value: stage)
@@ -85,6 +97,7 @@ struct GameFlowView: View {
         case .intro:
             BackgroundMusicPlayer.shared.playLoop(named: "HomePageSound")
         case .level, .coloring:
+            SoundEffectPlayer.shared.stopIntro()
             BackgroundMusicPlayer.shared.playLoop(named: "LevelPageSound")
         }
     }
@@ -114,7 +127,8 @@ struct GameFlowView: View {
 
     private func advanceToNextLevel() {
         guard let currentLevel = selectedLevel else { return }
-        let nextLevel = LevelNode.previewLevels(unlockedLevelID: highestUnlockedLevelID).first { $0.id == currentLevel.id + 1 }
+        let effectiveUnlockedLevelID = max(highestUnlockedLevelID, min(currentLevel.id + 1, LevelNode.maxLevelID))
+        let nextLevel = LevelNode.previewLevels(unlockedLevelID: effectiveUnlockedLevelID).first { $0.id == currentLevel.id + 1 }
 
         if let nextLevel {
             selectedLevel = nextLevel
