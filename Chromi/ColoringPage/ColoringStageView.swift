@@ -53,7 +53,7 @@ struct ColoringStageView: View {
                             .allowsHitTesting(false)
                     }
                 }
-
+ 
                 TwoFingerRotationHint()
 
                 Button(action: onOpenWorkbench) {
